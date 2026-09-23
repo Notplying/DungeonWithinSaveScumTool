@@ -1,0 +1,9 @@
+# Android build outputs (the APK is produced by GitHub Actions)
+android/.gradle/
+android/build/
+android/app/build/
+android/local.properties
+android/*.iml
+
+# Windows app runtime config (generated locally, never commit)
+config.json

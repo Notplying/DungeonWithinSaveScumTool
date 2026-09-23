@@ -1,0 +1,3 @@
+# Keep Unix shell scripts LF so gradlew runs on Linux CI runners.
+android/gradlew text eol=lf
+*.bat text eol=crlf

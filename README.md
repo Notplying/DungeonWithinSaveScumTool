@@ -14,3 +14,11 @@ Usage:
 - Double click "Install_Dependencies.bat" (For the first time, IF you don't have python)
 - **double click "Start_SaveManager.vbs"** and voila, the UI should pop-up
 - Click the backup to backup, restore to automatically close the game, restore the backed up file, and re-starts the game.
+
+## Android on-device app (non-root, no PC)
+
+`android/` holds a Kotlin app that does the same backup/restore entirely on
+the device: a floating SAVE button backed by the Shizuku app for privileged
+shell access (see `android/README.md` for install/usage). The APK is compiled
+by GitHub Actions (workflow artifacts) — no Android Studio needed. The
+Windows app above is untouched.
