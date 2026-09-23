@@ -124,7 +124,13 @@ class OverlayService : Service() {
     }
 
     private fun togglePanel() {
-        if (panel != null) hidePanel() else showPanel()
+        try {
+            if (panel != null) hidePanel() else showPanel()
+        } catch (e: Exception) {
+            // Never take the service down with a dead panel: report it so the
+            // message (toast text / logcat) identifies the real cause.
+            toast("Panel failed: ${e.message}")
+        }
     }
 
     private fun showPanel() {
@@ -149,7 +155,12 @@ class OverlayService : Service() {
             setOnClickListener { hidePanel() }
         })
         panel = layout
-        windowManager.addView(layout, params)
+        try {
+            windowManager.addView(layout, params)
+        } catch (e: Exception) {
+            panel = null
+            throw e
+        }
     }
 
     private fun hidePanel() {
