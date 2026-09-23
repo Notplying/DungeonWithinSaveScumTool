@@ -16,8 +16,8 @@
     <application
         android:name=".SaveApp"
         android:allowBackup="false"
-        android:icon="@mipmap/ic_launcher"
-        android:roundIcon="@mipmap/ic_launcher_round"
+        android:icon="@drawable/ic_save_logo"
+        android:roundIcon="@drawable/ic_save_logo"
         android:label="Dungeon Save Manager"
         android:supportsRtl="true"
         android:theme="@style/Theme.SaveManager">

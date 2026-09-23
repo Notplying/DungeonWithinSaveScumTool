@@ -1,13 +1,211 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Download-into-tray glyph (backup metaphor; Material Icons, Apache 2.0).
-     The floating button tints it; the launcher icon uses the fill as-is. -->
+<!-- Converted from android/simple_save_file_manager_app_icon.svg (kept as the
+     source asset). Filters (shadows/glow) have no VectorDrawable equivalent
+     and are dropped; gradients, shapes and colors are preserved. -->
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
-    android:width="24dp"
-    android:height="24dp"
-    android:viewportWidth="24"
-    android:viewportHeight="24"
-    android:tintMode="src_in">
+    android:width="512dp"
+    android:height="512dp"
+    android:viewportWidth="512"
+    android:viewportHeight="512">
+
+    <!-- App tile -->
     <path
-        android:fillColor="#FFFFFF"
-        android:pathData="M19,9h-4V3H9v6H5l7,7 7,-7zM5,18v2h14v-2H5z" />
+        android:pathData="M136,32 L376,32 A104,104 0 0 1 480,136 L480,376 A104,104 0 0 1 376,480 L136,480 A104,104 0 0 1 32,376 L32,136 A104,104 0 0 1 136,32 Z">
+        <gradient
+            android:type="linear"
+            android:startX="32"
+            android:startY="32"
+            android:endX="480"
+            android:endY="480"
+            android:tileMode="clamp">
+            <item android:offset="0" android:color="#111827" />
+            <item android:offset="0.6" android:color="#0B0F19" />
+            <item android:offset="1" android:color="#05070D" />
+        </gradient>
+    </path>
+    <path
+        android:pathData="M136.5,32.5 L375.5,32.5 A103.5,103.5 0 0 1 479.5,136 L479.5,376 A103.5,103.5 0 0 1 375.5,479.5 L136.5,479.5 A103.5,103.5 0 0 1 32.5,376 L32.5,136 A103.5,103.5 0 0 1 136.5,32.5 Z"
+        android:fillColor="@android:color/transparent"
+        android:strokeColor="#38BDF8"
+        android:strokeAlpha="0.3"
+        android:strokeWidth="1.5" />
+
+    <group>
+        <clip-path android:pathData="M136,32 L376,32 A104,104 0 0 1 480,136 L480,376 A104,104 0 0 1 376,480 L136,480 A104,104 0 0 1 32,376 L32,136 A104,104 0 0 1 136,32 Z" />
+
+        <!-- Center ambient backlight -->
+        <path android:pathData="M56,256 a200,200 0 1,0 400,0 a200,200 0 1,0 -400,0 Z">
+            <gradient
+                android:type="radial"
+                android:centerX="256"
+                android:centerY="256"
+                android:gradientRadius="200"
+                android:tileMode="clamp">
+                <item android:offset="0" android:color="#380284C7" />
+                <item android:offset="1" android:color="#000284C7" />
+            </gradient>
+        </path>
+
+        <!-- Floppy disk body -->
+        <path
+            android:pathData="M146,100 L358,100 L392,134 L392,376 A24,24 0 0 1 368,400 L144,400 A24,24 0 0 1 120,376 L120,126 A26,26 0 0 1 146,100 Z"
+            android:strokeColor="#334155"
+            android:strokeWidth="1.5">
+            <gradient
+                android:type="linear"
+                android:startX="256"
+                android:startY="100"
+                android:endX="256"
+                android:endY="400"
+                android:tileMode="clamp">
+                <item android:offset="0" android:color="#243048" />
+                <item android:offset="1" android:color="#121826" />
+            </gradient>
+        </path>
+        <path
+            android:pathData="M148,102 L356,102"
+            android:fillColor="@android:color/transparent"
+            android:strokeColor="#FFFFFF"
+            android:strokeAlpha="0.2"
+            android:strokeWidth="1.5"
+            android:strokeLineCap="round" />
+
+        <!-- Metal shutter -->
+        <path
+            android:pathData="M182,100 L330,100 A8,8 0 0 1 338,108 L338,184 A8,8 0 0 1 330,192 L182,192 A8,8 0 0 1 174,184 L174,108 A8,8 0 0 1 182,100 Z">
+            <gradient
+                android:type="linear"
+                android:startX="174"
+                android:startY="0"
+                android:endX="338"
+                android:endY="0"
+                android:tileMode="clamp">
+                <item android:offset="0" android:color="#64748B" />
+                <item android:offset="0.35" android:color="#E2E8F0" />
+                <item android:offset="0.7" android:color="#CBD5E1" />
+                <item android:offset="1" android:color="#94A3B8" />
+            </gradient>
+        </path>
+        <path
+            android:pathData="M221,116 L249,116 A5,5 0 0 1 254,121 L254,171 A5,5 0 0 1 249,176 L221,176 A5,5 0 0 1 216,171 L216,121 A5,5 0 0 1 221,116 Z"
+            android:fillColor="#0B0F19"
+            android:strokeColor="#334155"
+            android:strokeWidth="1" />
+        <path
+            android:pathData="M230,122 L240,122 A2,2 0 0 1 242,124 L242,168 A2,2 0 0 1 240,170 L230,170 A2,2 0 0 1 228,168 L228,124 A2,2 0 0 1 230,122 Z"
+            android:fillColor="#38BDF8"
+            android:fillAlpha="0.4" />
+        <path
+            android:pathData="M184,100 L184,192"
+            android:fillColor="@android:color/transparent"
+            android:strokeColor="#FFFFFF"
+            android:strokeAlpha="0.4"
+            android:strokeWidth="1" />
+
+        <!-- Label well -->
+        <path
+            android:pathData="M162,216 L350,216 A18,18 0 0 1 368,234 L368,354 A18,18 0 0 1 350,372 L162,372 A18,18 0 0 1 144,354 L144,234 A18,18 0 0 1 162,216 Z"
+            android:fillColor="#090D16"
+            android:strokeColor="#1E293B"
+            android:strokeWidth="1.5" />
+
+        <!-- Gamepad -->
+        <path
+            android:pathData="M204,252 C220,252 236,260 256,260 C276,260 292,252 308,252 C334,252 348,270 348,296 C348,318 334,336 316,336 C300,336 292,322 280,316 C270,310 264,310 256,310 C248,310 242,310 232,316 C220,322 212,336 196,336 C178,336 164,318 164,296 C164,270 178,252 204,252 Z">
+            <gradient
+                android:type="linear"
+                android:startX="164"
+                android:startY="252"
+                android:endX="348"
+                android:endY="336"
+                android:tileMode="clamp">
+                <item android:offset="0" android:color="#38BDF8" />
+                <item android:offset="1" android:color="#0284C7" />
+            </gradient>
+        </path>
+        <path
+            android:pathData="M197,280 L203,280 L203,287 L210,287 L210,293 L203,293 L203,300 L197,300 L197,293 L190,293 L190,287 L197,287 Z"
+            android:fillColor="#E0F2FE" />
+        <path
+            android:pathData="M305.8,279 a3.2,3.2 0 1,0 6.4,0 a3.2,3.2 0 1,0 -6.4,0 Z"
+            android:fillColor="#E0F2FE" />
+        <path
+            android:pathData="M313.8,290 a3.2,3.2 0 1,0 6.4,0 a3.2,3.2 0 1,0 -6.4,0 Z"
+            android:fillColor="#E0F2FE" />
+        <path
+            android:pathData="M305.8,301 a3.2,3.2 0 1,0 6.4,0 a3.2,3.2 0 1,0 -6.4,0 Z"
+            android:fillColor="#E0F2FE" />
+        <path
+            android:pathData="M297.8,290 a3.2,3.2 0 1,0 6.4,0 a3.2,3.2 0 1,0 -6.4,0 Z"
+            android:fillColor="#E0F2FE" />
+        <path
+            android:pathData="M253.5,285 a2.5,2.5 0 1,0 5,0 a2.5,2.5 0 1,0 -5,0 Z"
+            android:fillColor="#E0F2FE"
+            android:fillAlpha="0.8" />
+
+        <!-- Sync badge -->
+        <group
+            android:translateX="370"
+            android:translateY="372">
+            <path
+                android:pathData="M-42,0 a42,42 0 1,0 84,0 a42,42 0 1,0 -84,0 Z"
+                android:fillColor="#090D16" />
+            <path android:pathData="M-37,0 a37,37 0 1,0 74,0 a37,37 0 1,0 -74,0 Z">
+                <gradient
+                    android:type="linear"
+                    android:startX="-37"
+                    android:startY="-37"
+                    android:endX="37"
+                    android:endY="37"
+                    android:tileMode="clamp">
+                    <item android:offset="0" android:color="#22D3EE" />
+                    <item android:offset="1" android:color="#059669" />
+                </gradient>
+            </path>
+            <path
+                android:pathData="M-16,-6 A18,18 0 0 1 14,-10"
+                android:fillColor="@android:color/transparent"
+                android:strokeColor="#FFFFFF"
+                android:strokeWidth="4.5"
+                android:strokeLineCap="round"
+                android:strokeLineJoin="round" />
+            <path
+                android:pathData="M8,-16 L15,-10 L8,-4"
+                android:fillColor="@android:color/transparent"
+                android:strokeColor="#FFFFFF"
+                android:strokeWidth="4.5"
+                android:strokeLineCap="round"
+                android:strokeLineJoin="round" />
+            <path
+                android:pathData="M16,6 A18,18 0 0 1 -14,10"
+                android:fillColor="@android:color/transparent"
+                android:strokeColor="#FFFFFF"
+                android:strokeWidth="4.5"
+                android:strokeLineCap="round"
+                android:strokeLineJoin="round" />
+            <path
+                android:pathData="M-8,16 L-15,10 L-8,4"
+                android:fillColor="@android:color/transparent"
+                android:strokeColor="#FFFFFF"
+                android:strokeWidth="4.5"
+                android:strokeLineCap="round"
+                android:strokeLineJoin="round" />
+        </group>
+
+        <!-- Glass glare -->
+        <path android:pathData="M32,32 L340,32 L60,480 L32,480 Z">
+            <gradient
+                android:type="linear"
+                android:startX="32"
+                android:startY="32"
+                android:endX="340"
+                android:endY="480"
+                android:tileMode="clamp">
+                <item android:offset="0" android:color="#24FFFFFF" />
+                <item android:offset="0.35" android:color="#05FFFFFF" />
+                <item android:offset="0.36" android:color="#00FFFFFF" />
+                <item android:offset="1" android:color="#00FFFFFF" />
+            </gradient>
+        </path>
+    </group>
 </vector>
