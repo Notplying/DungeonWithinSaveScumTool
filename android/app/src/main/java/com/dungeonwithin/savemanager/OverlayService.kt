@@ -18,7 +18,6 @@ import android.view.View
 import android.view.WindowManager
 import android.widget.Button
 import android.widget.LinearLayout
-import android.widget.Toast
 
 /**
  * Foreground service hosting the draggable floating SAVE button.
@@ -116,11 +115,11 @@ class OverlayService : Service() {
         }
         layout.addView(Button(this).apply {
             text = "Back Up"
-            setOnClickListener { runOp(isBackup = true) }
+            setOnClickListener { runOp(SaveOp.BACKUP) }
         })
         layout.addView(Button(this).apply {
             text = "Restore"
-            setOnClickListener { runOp(isBackup = false) }
+            setOnClickListener { runOp(SaveOp.RESTORE) }
         })
         layout.addView(Button(this).apply {
             text = "Hide"
@@ -146,21 +145,18 @@ class OverlayService : Service() {
             gravity = Gravity.TOP or Gravity.START
         }
 
-    private fun runOp(isBackup: Boolean) {
+    private fun runOp(op: SaveOp) {
         toast("Working…")
         Thread {
-            val repo = SaveRepository(ShizukuShellExecutor())
-            val outcome = try {
-                if (isBackup) repo.doBackup() else repo.doRestore()
-            } catch (_: SecurityException) {
-                SaveRepository.Outcome.Err("Shizuku permission denied. Grant it in the Save Manager app.")
-            } catch (_: ShizukuNotBoundException) {
-                SaveRepository.Outcome.Err("Shizuku is not running. Start it, then retry.")
-            } catch (e: Exception) {
-                SaveRepository.Outcome.Err("Error: ${e.message ?: e}")
+            val outcome = SaveOperations.execute(op)
+            // Success fits one line; failures carry guidance ("Looked for: …",
+            // "Launch … manually") that the overlay user must see in full.
+            val text = if (outcome is SaveRepository.Outcome.Ok) {
+                outcome.message.substringBefore("\n")
+            } else {
+                outcome.message
             }
-            // Toasts show one line; the full message lives in the app's status view.
-            mainHandler.post { toast(outcome.message.substringBefore("\n")) }
+            mainHandler.post { toast(text) }
         }.start()
     }
 
@@ -169,12 +165,6 @@ class OverlayService : Service() {
             .putInt(KEY_X, fabParams.x)
             .putInt(KEY_Y, fabParams.y)
             .apply()
-    }
-
-    private fun dp(value: Int): Int = (value * resources.displayMetrics.density).toInt()
-
-    private fun toast(msg: String) {
-        Toast.makeText(this, msg, Toast.LENGTH_LONG).show()
     }
 
     /**

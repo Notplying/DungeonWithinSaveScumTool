@@ -77,8 +77,10 @@ class SaveRepository(private val shell: ShellExecutor) {
         } else {
             "Relaunch sent - confirm the game is on screen."
         }
+        // The fallback script prefers the primary path; name the source used.
+        val source = if (hasPrimary) SavePaths.BACKUP_SAVE else SavePaths.BACKUP_SAVE_ALT
         return Outcome.Ok(
-            "Restore OK:\n${SavePaths.BACKUP_SAVE}\n  -> ${SavePaths.GAME_SAVE}\n$detail\n$status",
+            "Restore OK:\n$source\n  -> ${SavePaths.GAME_SAVE}\n$detail\n$status",
         )
     }
 

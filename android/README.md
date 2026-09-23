@@ -64,6 +64,9 @@ android/
     src/main/java/.../SavePaths.kt  # pure shell-string builders (tested)
     src/main/java/.../ShellExecutor.kt
     src/main/java/.../SaveRepository.kt      # backup/restore flow (tested)
+    src/main/java/.../SaveOp.kt              # Backup vs Restore domain type
+    src/main/java/.../SaveOperations.kt      # shared run entry point + error mapping
+    src/main/java/.../Ui.kt                  # toast/dp helpers
     src/main/java/.../ShizukuShellExecutor.kt# Shizuku.newProcess backend
     src/main/java/.../ShizukuHelper.kt       # install/binder/permission gates
     src/main/java/.../MainActivity.kt        # setup checklist + manual buttons

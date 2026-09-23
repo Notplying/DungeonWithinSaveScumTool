@@ -19,33 +19,22 @@ object ShizukuHelper {
     const val PERMISSION_REQUEST_CODE = 1001
 
     fun isManagerInstalled(pm: PackageManager): Boolean =
-        MANAGER_PACKAGES.any { pkg ->
-            try {
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                    pm.getPackageInfo(pkg, PackageManager.PackageInfoFlags.of(0))
-                } else {
-                    @Suppress("DEPRECATION")
-                    pm.getPackageInfo(pkg, 0)
-                }
-                true
-            } catch (_: PackageManager.NameNotFoundException) {
-                false
-            }
-        }
+        MANAGER_PACKAGES.any { isPackageInstalled(pm, it) }
 
     fun installedManagerPackage(pm: PackageManager): String? =
-        MANAGER_PACKAGES.firstOrNull { pkg ->
-            try {
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                    pm.getPackageInfo(pkg, PackageManager.PackageInfoFlags.of(0))
-                } else {
-                    @Suppress("DEPRECATION")
-                    pm.getPackageInfo(pkg, 0)
-                }
-                true
-            } catch (_: PackageManager.NameNotFoundException) {
-                false
+        MANAGER_PACKAGES.firstOrNull { isPackageInstalled(pm, it) }
+
+    private fun isPackageInstalled(pm: PackageManager, pkg: String): Boolean =
+        try {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                pm.getPackageInfo(pkg, PackageManager.PackageInfoFlags.of(0))
+            } else {
+                @Suppress("DEPRECATION")
+                pm.getPackageInfo(pkg, 0)
             }
+            true
+        } catch (_: PackageManager.NameNotFoundException) {
+            false
         }
 
     fun isBinderAlive(): Boolean =
@@ -64,7 +53,15 @@ object ShizukuHelper {
         }
     }
 
-    /** True when the user ticked "deny and don't ask again". */
+    /**
+     * True when the user ticked "deny and don't ask again".
+     *
+     * NOTE: Shizuku inverts the framework convention here — its
+     * `shouldShowRequestPermissionRationale()` returns true exactly in the
+     * permanent-denial case (see the Shizuku-API README sample, where this
+     * branch is commented "Users choose 'Deny and don't ask again'").
+     * Do not "fix" this to `!shouldShow...`: that would misroute both states.
+     */
     fun isPermanentlyDenied(): Boolean {
         if (!isBinderAlive() || hasPermission()) return false
         return try {

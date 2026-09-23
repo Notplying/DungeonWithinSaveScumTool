@@ -10,7 +10,6 @@ import android.widget.Button
 import android.widget.LinearLayout
 import android.widget.ScrollView
 import android.widget.TextView
-import android.widget.Toast
 import rikka.shizuku.Shizuku
 
 /**
@@ -65,11 +64,11 @@ class MainActivity : Activity() {
         overlayButton = Button(this).apply { setOnClickListener { onOverlayButton() } }
         backupButton = Button(this).apply {
             text = "Back Up Now"
-            setOnClickListener { runOp(isBackup = true) }
+            setOnClickListener { runOp(SaveOp.BACKUP) }
         }
         restoreButton = Button(this).apply {
             text = "Restore"
-            setOnClickListener { runOp(isBackup = false) }
+            setOnClickListener { runOp(SaveOp.RESTORE) }
         }
         column.addView(shizukuButton)
         column.addView(overlayButton)
@@ -141,32 +140,23 @@ class MainActivity : Activity() {
         toast("Floating button started — look for SAVE on screen.")
     }
 
-    private fun runOp(isBackup: Boolean) {
+    private fun runOp(op: SaveOp) {
         if (working) return
         working = true
         refreshButtons()
         statusView.text = "Working…"
         Thread {
-            val repo = SaveRepository(ShizukuShellExecutor())
-            val outcome = try {
-                if (isBackup) repo.doBackup() else repo.doRestore()
-            } catch (_: SecurityException) {
-                SaveRepository.Outcome.Err("Shizuku permission denied. Grant it, then retry.")
-            } catch (e: ShizukuNotBoundException) {
-                SaveRepository.Outcome.Err("Shizuku is not running. Start it, then retry.")
-            } catch (e: Exception) {
-                SaveRepository.Outcome.Err("Error: ${e.message ?: e}")
-            }
-            val short = if (outcome is SaveRepository.Outcome.Ok) {
-                if (isBackup) "Backup OK" else "Restore OK"
+            val outcome = SaveOperations.execute(op)
+            val summary = if (outcome is SaveRepository.Outcome.Ok) {
+                "${op.label} OK"
             } else {
-                if (isBackup) "Backup failed" else "Restore failed"
+                "${op.label} failed"
             }
             runOnUiThread {
                 working = false
                 statusView.text = outcome.message
                 statusView.gravity = Gravity.START
-                toast("$short — see details above.")
+                toast("$summary — see details above.")
                 refreshStatus()
             }
         }.start()
@@ -214,11 +204,5 @@ class MainActivity : Activity() {
         backupButton.isEnabled = ready && !working
         restoreButton.isEnabled = ready && !working
         overlayButton.isEnabled = !working
-    }
-
-    private fun dp(value: Int): Int = (value * resources.displayMetrics.density).toInt()
-
-    private fun toast(msg: String) {
-        Toast.makeText(this, msg, Toast.LENGTH_LONG).show()
     }
 }

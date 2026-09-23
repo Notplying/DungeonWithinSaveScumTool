@@ -76,23 +76,23 @@ class SaveCommandsTest {
         val outcome = SaveRepository(fake).doRestore()
 
         assertTrue(outcome is SaveRepository.Outcome.Ok)
-        val kinds = fake.scripts
-        val idxStop = kinds.indexOfFirst { it.contains("force-stop") }
-        val idxCopy = kinds.indexOfFirst { it.contains("cp -f") }
-        val idxLaunch = kinds.indexOfFirst { it.contains("monkey") }
+        val scripts = fake.scripts
+        val idxStop = scripts.indexOfFirst { it.contains("force-stop") }
+        val idxCopy = scripts.indexOfFirst { it.contains("cp -f") }
+        val idxLaunch = scripts.indexOfFirst { it.contains("monkey") }
         assertTrue("force-stop must run", idxStop >= 0)
         assertTrue("copy must run", idxCopy >= 0)
         assertTrue("relaunch must run", idxLaunch >= 0)
         assertTrue("close before copy", idxStop < idxCopy)
         assertTrue("copy before relaunch", idxCopy < idxLaunch)
-        assertTrue(kinds[idxStop].contains(SavePaths.PACKAGE))
-        assertTrue(kinds[idxLaunch].contains(SavePaths.PACKAGE))
+        assertTrue(scripts[idxStop].contains(SavePaths.PACKAGE))
+        assertTrue(scripts[idxLaunch].contains(SavePaths.PACKAGE))
         assertTrue("must report relaunch", outcome.message.contains("elaunch"))
     }
 
     @Test
     fun restore_withoutBackup_doesNotCloseGame() {
-        val fake = FakeShell(backupPresent = false)
+        val fake = FakeShell(primaryPresent = false, altPresent = false)
         val outcome = SaveRepository(fake).doRestore()
 
         assertTrue(outcome is SaveRepository.Outcome.Err)
@@ -100,6 +100,18 @@ class SaveCommandsTest {
         assertFalse("must not close game without backup", all.contains("force-stop"))
         assertFalse("must not relaunch without backup", all.contains("monkey"))
         assertTrue(outcome.message.contains("No backup found"))
+    }
+
+    @Test
+    fun restore_fromAltBackup_reportsAltSource() {
+        val fake = FakeShell(primaryPresent = false, altPresent = true)
+        val outcome = SaveRepository(fake).doRestore()
+
+        assertTrue(outcome is SaveRepository.Outcome.Ok)
+        assertTrue(
+            "message must name the backup actually used",
+            outcome.message.contains(SavePaths.BACKUP_SAVE_ALT),
+        )
     }
 
     @Test
@@ -135,7 +147,8 @@ class SaveCommandsTest {
     // ---------- Fake ----------
 
     private class FakeShell(
-        private val backupPresent: Boolean = true,
+        private val primaryPresent: Boolean = true,
+        private val altPresent: Boolean = true,
         private val gameSavePresent: Boolean = true,
         private val monkeyExitCode: Int = 0,
     ) : ShellExecutor {
@@ -146,8 +159,8 @@ class SaveCommandsTest {
             if (script.startsWith("test -f")) {
                 val present = when {
                     script.contains(SavePaths.GAME_SAVE) -> gameSavePresent
-                    script.contains(SavePaths.BACKUP_SAVE_ALT) -> backupPresent
-                    script.contains(SavePaths.BACKUP_SAVE) -> backupPresent
+                    script.contains(SavePaths.BACKUP_SAVE_ALT) -> altPresent
+                    script.contains(SavePaths.BACKUP_SAVE) -> primaryPresent
                     else -> false
                 }
                 return ShellExecutor.Result(0, if (present) "EXISTS" else "", "")
@@ -167,7 +180,7 @@ class SaveCommandsTest {
             }
             // mkdir/cp/am and the fallback restore script all succeed when a
             // backup is present; the fallback reports NO_BACKUP_FOUND otherwise.
-            if (script.contains("NO_BACKUP_FOUND") && !backupPresent) {
+            if (script.contains("NO_BACKUP_FOUND") && !primaryPresent && !altPresent) {
                 return ShellExecutor.Result(1, "NO_BACKUP_FOUND", "")
             }
             return ShellExecutor.Result(0, "", "")
