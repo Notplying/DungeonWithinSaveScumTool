@@ -102,7 +102,7 @@ class OverlayService : Service() {
             y = prefs.getInt(KEY_Y, dp(160))
         }
         fab = ImageButton(this).apply {
-            setImageResource(R.drawable.ic_save_logo)
+            setImageResource(R.mipmap.ic_launcher)
             setBackgroundColor(Color.TRANSPARENT)
             scaleType = ImageView.ScaleType.FIT_CENTER
             contentDescription = "Save manager floating button. Tap for backup and restore."
