@@ -20,6 +20,10 @@ android {
             isMinifyEnabled = false
         }
     }
+    base {
+        // Output is DungeonWithinSaveManager-debug.apk instead of app-debug.apk.
+        archivesName.set("DungeonWithinSaveManager")
+    }
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17

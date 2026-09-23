@@ -18,7 +18,8 @@ Usage:
 ## Android on-device app (non-root, no PC)
 
 `android/` holds a Kotlin app that does the same backup/restore entirely on
-the device: a floating save-logo button backed by the Shizuku app for privileged
-shell access (see `android/README.md` for install/usage). The APK is compiled
-by GitHub Actions (workflow artifacts) — no Android Studio needed. The
-Windows app above is untouched.
+the device: a floating save-logo button backed by the
+[Shizuku app](https://play.google.com/store/apps/details?id=moe.shizuku.privileged.api)
+for privileged shell access (see `android/README.md` for install/usage).
+Grab DungeonWithinSaveManager.apk from the Releases page, it's published
+automatically — no Android Studio needed. The Windows app above is untouched.

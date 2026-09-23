@@ -1,19 +1,18 @@
-name: Build APK
+name: Release APK
 
+# Publishes DungeonWithinSaveManager.apk as a GitHub Release.
+# Trigger: push a tag like v1.0, or run it by hand from the Actions tab.
 on:
   push:
-    paths:
-      - "android/**"
-      - ".github/workflows/build-apk.yml"
-  pull_request:
-    paths:
-      - "android/**"
-      - ".github/workflows/build-apk.yml"
+    tags:
+      - "v*"
   workflow_dispatch:
 
 jobs:
-  build:
+  build-and-release:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     defaults:
       run:
         working-directory: android
@@ -29,10 +28,6 @@ jobs:
           cache: gradle
 
       - name: Install compile SDK packages
-        # ubuntu runners ship an SDK with cmdline-tools preinstalled, but
-        # sdkmanager is not on PATH (setup-android used to put it there).
-        # android-actions/setup-android itself is avoided: v3 requests the
-        # long-removed "tools" package and fails the whole job.
         run: |
           : "${ANDROID_SDK_ROOT:?Android SDK not found on runner}"
           export PATH="$ANDROID_SDK_ROOT/cmdline-tools/latest/bin:$PATH"
@@ -48,8 +43,8 @@ jobs:
       - name: Rename APK
         run: mv app/build/outputs/apk/debug/DungeonWithinSaveManager-debug.apk app/build/outputs/apk/debug/DungeonWithinSaveManager.apk
 
-      - name: Upload APK
-        uses: actions/upload-artifact@v4
+      - name: Publish release
+        uses: softprops/action-gh-release@v2
         with:
-          name: DungeonWithinSaveManager-apk
-          path: android/app/build/outputs/apk/debug/DungeonWithinSaveManager.apk
+          files: android/app/build/outputs/apk/debug/DungeonWithinSaveManager.apk
+          generate_release_notes: true
