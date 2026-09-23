@@ -1,15 +1,15 @@
 package com.dungeonwithin.savemanager
 
-import android.app.Activity
 import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
 import android.provider.Settings
 import android.view.Gravity
-import android.widget.Button
 import android.widget.LinearLayout
 import android.widget.ScrollView
 import android.widget.TextView
+import androidx.appcompat.app.AppCompatActivity
+import com.google.android.material.button.MaterialButton
 import rikka.shizuku.Shizuku
 
 /**
@@ -19,13 +19,15 @@ import rikka.shizuku.Shizuku
  *
  * All shell work runs off the main thread via [SaveRepository].
  */
-class MainActivity : Activity() {
+class MainActivity : AppCompatActivity() {
 
     private lateinit var statusView: TextView
-    private lateinit var shizukuButton: Button
-    private lateinit var overlayButton: Button
-    private lateinit var backupButton: Button
-    private lateinit var restoreButton: Button
+    private lateinit var shizukuButton: MaterialButton
+    private lateinit var overlayButton: MaterialButton
+    private lateinit var backupButton: MaterialButton
+    private lateinit var restoreButton: MaterialButton
+    private lateinit var batteryButton: MaterialButton
+    private lateinit var stopButton: MaterialButton
     private var working = false
 
     private val binderReceivedListener = Shizuku.OnBinderReceivedListener {
@@ -60,20 +62,32 @@ class MainActivity : Activity() {
         }
         column.addView(statusView)
 
-        shizukuButton = Button(this).apply { setOnClickListener { onShizukuButton() } }
-        overlayButton = Button(this).apply { setOnClickListener { onOverlayButton() } }
-        backupButton = Button(this).apply {
+        shizukuButton = MaterialButton(this).apply { setOnClickListener { onShizukuButton() } }
+        overlayButton = MaterialButton(this).apply { setOnClickListener { onOverlayButton() } }
+        backupButton = MaterialButton(this).apply {
             text = "Back Up Now"
             setOnClickListener { runOp(SaveOp.BACKUP) }
         }
-        restoreButton = Button(this).apply {
+        restoreButton = MaterialButton(this).apply {
             text = "Restore"
             setOnClickListener { runOp(SaveOp.RESTORE) }
+        }
+        batteryButton = MaterialButton(this).apply {
+            setOnClickListener { BatteryHelper.requestUnrestricted(this@MainActivity) }
+        }
+        stopButton = MaterialButton(this).apply {
+            text = "Stop floating button"
+            setOnClickListener {
+                stopService(Intent(this@MainActivity, OverlayService::class.java))
+                toast("Floating button stopped.")
+            }
         }
         column.addView(shizukuButton)
         column.addView(overlayButton)
         column.addView(backupButton)
         column.addView(restoreButton)
+        column.addView(batteryButton)
+        column.addView(stopButton)
         column.addView(TextView(this).apply {
             text = "Restore closes the game, replaces its save with your backup, " +
                 "then relaunches it. Backups live in Download/save.es3 (overwritten each time)."
@@ -195,6 +209,13 @@ class MainActivity : Activity() {
         } else {
             "Allow overlay permission"
         }
+        val unrestricted = BatteryHelper.isUnrestricted(this)
+        batteryButton.text = if (unrestricted) {
+            "Battery optimization off"
+        } else {
+            "Allow unrestricted battery"
+        }
+        batteryButton.isEnabled = !unrestricted && !working
         refreshButtons()
     }
 
@@ -204,5 +225,6 @@ class MainActivity : Activity() {
         backupButton.isEnabled = ready && !working
         restoreButton.isEnabled = ready && !working
         overlayButton.isEnabled = !working
+        batteryButton.isEnabled = !BatteryHelper.isUnrestricted(this) && !working
     }
 }

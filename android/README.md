@@ -1,9 +1,12 @@
 # Dungeon Save Manager (Android, on-device, non-root)
 
-Floating **SAVE** button that backs up and restores the DungeonWithin save
+Floating **save-logo button** that backs up and restores the DungeonWithin save
 file entirely on-device — no PC, no ADB cable, no root. Privileged shell
 access goes through the [Shizuku](https://shizuku.rikka.app/) app, which
 grants ADB-level rights on the device itself.
+
+The UI follows the system Material You theme (wallpaper dynamic color,
+light/dark), so it blends in instead of looking jarring.
 
 Behavior is a direct port of the Windows app (`save_manager.py`, repo root):
 same paths, same ordering, same pre-check guarantees.
@@ -43,15 +46,19 @@ No Android Studio or local SDK is needed — GitHub Actions compiles the APK.
 ## Usage
 
 - Tap **Start floating button**, then switch to the game. The draggable
-  **SAVE** button floats over it.
-- Tap SAVE → **Back Up** copies the live save to `Download/save.es3`
+  **save-logo button** floats over it.
+- Tap the logo → **Back Up** copies the live save to `Download/save.es3`
   (overwrites). Toast confirms.
-- Tap SAVE → **Restore** closes the game, replaces its save with the backup,
+- Tap the logo → **Restore** closes the game, replaces its save with the backup,
   and relaunches the game. If no backup exists, the game is left untouched.
-- Press-and-hold SAVE (~0.6s, without dragging) to dismiss the button.
+- Press-and-hold the logo (~0.6s, without dragging) to dismiss the button.
   Button position is remembered.
 - The app's main screen offers the same Back Up / Restore buttons plus the
   full status log, and re-guides you whenever Shizuku stops (e.g. reboot).
+- **Allow unrestricted battery**: exempts the app from battery optimization
+  so the system is less likely to kill the floating button's service.
+- **Stop floating button**: dismisses the overlay from the app (same as
+  press-and-hold on the logo).
 
 ## Project layout
 

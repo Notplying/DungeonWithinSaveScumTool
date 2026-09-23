@@ -6,16 +6,19 @@
     <!-- Foreground service hosting the floating button (Android 14+ type). -->
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE" />
+    <!-- Lets the app ask to be exempted from battery optimization. -->
+    <uses-permission android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS" />
     <!-- Shizuku privileged-shell API (non-root access to Android/data). -->
     <uses-permission android:name="moe.shizuku.manager.permission.API_V23" />
 
     <!-- No network permission: the app works fully offline on-device. -->
 
     <application
+        android:name=".SaveApp"
         android:allowBackup="false"
         android:label="Dungeon Save Manager"
         android:supportsRtl="true"
-        android:theme="@android:style/Theme.Material.Light.NoActionBar">
+        android:theme="@style/Theme.SaveManager">
 
         <activity
             android:name=".MainActivity"

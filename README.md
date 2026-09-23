@@ -18,7 +18,7 @@ Usage:
 ## Android on-device app (non-root, no PC)
 
 `android/` holds a Kotlin app that does the same backup/restore entirely on
-the device: a floating SAVE button backed by the Shizuku app for privileged
+the device: a floating save-logo button backed by the Shizuku app for privileged
 shell access (see `android/README.md` for install/usage). The APK is compiled
 by GitHub Actions (workflow artifacts) — no Android Studio needed. The
 Windows app above is untouched.

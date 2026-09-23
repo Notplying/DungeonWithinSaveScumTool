@@ -33,6 +33,8 @@ dependencies {
     // Shizuku privileged shell access (non-root path to Android/data).
     implementation("dev.rikka.shizuku:api:13.1.5")
     implementation("dev.rikka.shizuku:provider:13.1.5")
+    // Material You (dynamic color, DayNight): app + overlay buttons.
+    implementation("com.google.android.material:material:1.12.0")
 
     testImplementation("junit:junit:4.13.2")
 }

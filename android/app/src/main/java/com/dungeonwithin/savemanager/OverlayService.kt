@@ -12,15 +12,19 @@ import android.graphics.PixelFormat
 import android.os.Handler
 import android.os.IBinder
 import android.os.Looper
+import android.content.res.ColorStateList
+import android.util.TypedValue
 import android.view.Gravity
 import android.view.MotionEvent
 import android.view.View
 import android.view.WindowManager
-import android.widget.Button
+import android.widget.ImageButton
 import android.widget.LinearLayout
+import com.google.android.material.R as MaterialR
+import com.google.android.material.button.MaterialButton
 
 /**
- * Foreground service hosting the draggable floating SAVE button.
+ * Foreground service hosting the draggable floating save-logo button.
  *
  * Tap opens a small panel with Back Up / Restore / Hide. Touch-hold
  * (long-press without dragging) stops the service. Button position is
@@ -42,7 +46,7 @@ class OverlayService : Service() {
 
     private lateinit var windowManager: WindowManager
     private lateinit var fabParams: WindowManager.LayoutParams
-    private var fab: Button? = null
+    private var fab: ImageButton? = null
     private var panel: LinearLayout? = null
     private val mainHandler = Handler(Looper.getMainLooper())
 
@@ -92,8 +96,14 @@ class OverlayService : Service() {
             x = prefs.getInt(KEY_X, dp(16))
             y = prefs.getInt(KEY_Y, dp(160))
         }
-        fab = Button(this).apply {
-            text = "SAVE"
+        fab = ImageButton(this).apply {
+            setImageResource(R.drawable.ic_save_logo)
+            setBackgroundResource(R.drawable.fab_background)
+            imageTintList = ColorStateList.valueOf(
+                resolveAttrColor(MaterialR.attr.colorOnPrimaryContainer),
+            )
+            val pad = dp(14)
+            setPadding(pad, pad, pad, pad)
             contentDescription = "Save manager floating button. Tap for backup and restore."
             setOnTouchListener(DragListener { togglePanel() })
         }
@@ -113,15 +123,15 @@ class OverlayService : Service() {
             orientation = LinearLayout.VERTICAL
             setPadding(dp(8), dp(8), dp(8), dp(8))
         }
-        layout.addView(Button(this).apply {
+        layout.addView(MaterialButton(this).apply {
             text = "Back Up"
             setOnClickListener { runOp(SaveOp.BACKUP) }
         })
-        layout.addView(Button(this).apply {
+        layout.addView(MaterialButton(this).apply {
             text = "Restore"
             setOnClickListener { runOp(SaveOp.RESTORE) }
         })
-        layout.addView(Button(this).apply {
+        layout.addView(MaterialButton(this).apply {
             text = "Hide"
             setOnClickListener { hidePanel() }
         })
@@ -165,6 +175,12 @@ class OverlayService : Service() {
             .putInt(KEY_X, fabParams.x)
             .putInt(KEY_Y, fabParams.y)
             .apply()
+    }
+
+    private fun resolveAttrColor(attr: Int): Int {
+        val out = TypedValue()
+        theme.resolveAttribute(attr, out, true)
+        return out.data
     }
 
     /**
