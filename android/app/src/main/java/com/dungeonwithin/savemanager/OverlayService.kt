@@ -22,6 +22,8 @@ import android.widget.Button
 import android.widget.ImageButton
 import android.widget.ImageView
 import android.widget.LinearLayout
+import android.widget.TextView
+import com.google.android.material.R as MaterialR
 
 /**
  * Foreground service hosting the draggable floating save-logo button.
@@ -35,6 +37,8 @@ class OverlayService : Service() {
     companion object {
         private const val CHANNEL_ID = "floating_button"
         private const val NOTIFICATION_ID = 1
+        private const val RESULTS_CHANNEL_ID = "backup_results"
+        private const val RESULT_NOTIFICATION_ID = 2
         private const val PREFS = "overlay"
         private const val KEY_X = "x"
         private const val KEY_Y = "y"
@@ -48,6 +52,7 @@ class OverlayService : Service() {
     private lateinit var fabParams: WindowManager.LayoutParams
     private var fab: ImageButton? = null
     private var panel: LinearLayout? = null
+    private var resultView: TextView? = null
     private val mainHandler = Handler(Looper.getMainLooper())
 
     override fun onBind(intent: Intent?): IBinder? = null
@@ -68,6 +73,7 @@ class OverlayService : Service() {
         panel?.let { runCatching { windowManager.removeView(it) } }
         fab = null
         panel = null
+        resultView = null
         super.onDestroy()
     }
 
@@ -153,6 +159,13 @@ class OverlayService : Service() {
             text = "Hide"
             setOnClickListener { hidePanel() }
         })
+        // Result line: survives toast suppression and stays until Hide.
+        resultView = TextView(this).apply {
+            text = "Pick an action."
+            textSize = 13f
+            setPadding(dp(4), dp(8), dp(4), 0)
+        }
+        layout.addView(resultView)
         panel = layout
         try {
             windowManager.addView(layout, params)
@@ -165,6 +178,7 @@ class OverlayService : Service() {
     private fun hidePanel() {
         panel?.let { runCatching { windowManager.removeView(it) } }
         panel = null
+        resultView = null
     }
 
     private fun overlayParams(): WindowManager.LayoutParams =
@@ -180,17 +194,59 @@ class OverlayService : Service() {
 
     private fun runOp(op: SaveOp) {
         toast("Working…")
+        resultView?.text = "Working…"
         Thread {
             val outcome = SaveOperations.execute(op, this@OverlayService)
+            val ok = outcome is SaveRepository.Outcome.Ok
             // Success fits one line; failures carry guidance ("Looked for: …",
             // "Launch … manually") that the overlay user must see in full.
-            val text = if (outcome is SaveRepository.Outcome.Ok) {
+            val short = if (ok) {
                 outcome.message.substringBefore("\n")
             } else {
                 outcome.message
             }
-            mainHandler.post { toast(text) }
+            val title = if (ok) "${op.label} OK" else "${op.label} failed"
+            mainHandler.post {
+                toast(short)
+                resultView?.let {
+                    it.text = outcome.message
+                    it.setTextColor(
+                        attrColor(
+                            if (ok) MaterialR.attr.colorPrimary else MaterialR.attr.colorError,
+                            if (ok) Color.GREEN else Color.RED,
+                        ),
+                    )
+                }
+                notifyResult(title, outcome.message)
+            }
         }.start()
+    }
+
+    /**
+     * Heads-up notification with the full result. Toasts can be suppressed
+     * device-wide (seen in the wild); this channel is high-importance so the
+     * outcome still surfaces over the game. Tap opens the app for details.
+     */
+    private fun notifyResult(title: String, message: String) {
+        val manager = getSystemService(NOTIFICATION_SERVICE) as NotificationManager
+        manager.createNotificationChannel(
+            NotificationChannel(RESULTS_CHANNEL_ID, "Backup results", NotificationManager.IMPORTANCE_HIGH),
+        )
+        val openApp = PendingIntent.getActivity(
+            this,
+            1,
+            Intent(this, MainActivity::class.java),
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
+        )
+        val notification = Notification.Builder(this, RESULTS_CHANNEL_ID)
+            .setContentTitle(title)
+            .setContentText(message.substringBefore("\n"))
+            .setStyle(Notification.BigTextStyle().bigText(message))
+            .setSmallIcon(android.R.drawable.ic_menu_save)
+            .setContentIntent(openApp)
+            .setAutoCancel(true)
+            .build()
+        manager.notify(RESULT_NOTIFICATION_ID, notification)
     }
 
     private fun savePosition() {

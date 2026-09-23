@@ -1,6 +1,7 @@
 package com.dungeonwithin.savemanager
 
 import android.content.Intent
+import android.graphics.Color
 import android.net.Uri
 import android.os.Bundle
 import android.provider.Settings
@@ -9,6 +10,7 @@ import android.widget.LinearLayout
 import android.widget.ScrollView
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
+import com.google.android.material.R as MaterialR
 import com.google.android.material.button.MaterialButton
 import rikka.shizuku.Shizuku
 
@@ -169,6 +171,16 @@ class MainActivity : AppCompatActivity() {
             runOnUiThread {
                 working = false
                 statusView.text = outcome.message
+                statusView.setTextColor(
+                    attrColor(
+                        if (outcome is SaveRepository.Outcome.Ok) {
+                            MaterialR.attr.colorPrimary
+                        } else {
+                            MaterialR.attr.colorError
+                        },
+                        if (outcome is SaveRepository.Outcome.Ok) Color.GREEN else Color.RED,
+                    ),
+                )
                 statusView.gravity = Gravity.START
                 toast("$summary — see details above.")
                 refreshStatus()
