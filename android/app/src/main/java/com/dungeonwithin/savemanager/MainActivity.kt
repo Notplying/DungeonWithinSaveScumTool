@@ -84,9 +84,9 @@ class MainActivity : AppCompatActivity() {
         }
         column.addView(shizukuButton)
         column.addView(overlayButton)
+        column.addView(batteryButton)
         column.addView(backupButton)
         column.addView(restoreButton)
-        column.addView(batteryButton)
         column.addView(stopButton)
         column.addView(TextView(this).apply {
             text = "Restore closes the game, replaces its save with your backup, " +

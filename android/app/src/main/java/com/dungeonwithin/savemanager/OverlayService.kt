@@ -13,6 +13,9 @@ import android.os.Handler
 import android.os.IBinder
 import android.os.Looper
 import android.content.res.ColorStateList
+import android.graphics.Color
+import android.graphics.drawable.Drawable
+import android.graphics.drawable.GradientDrawable
 import android.util.TypedValue
 import android.view.Gravity
 import android.view.MotionEvent
@@ -38,6 +41,9 @@ class OverlayService : Service() {
         private const val PREFS = "overlay"
         private const val KEY_X = "x"
         private const val KEY_Y = "y"
+
+        /** Last-resort purple when dynamic colors can't resolve. */
+        private const val FALLBACK_CONTAINER = 0xFF6750A4.toInt()
 
         fun start(context: Context) {
             context.startForegroundService(Intent(context, OverlayService::class.java))
@@ -98,16 +104,23 @@ class OverlayService : Service() {
         }
         fab = ImageButton(this).apply {
             setImageResource(R.drawable.ic_save_logo)
-            setBackgroundResource(R.drawable.fab_background)
+            background = fabBackground()
             imageTintList = ColorStateList.valueOf(
-                resolveAttrColor(MaterialR.attr.colorOnPrimaryContainer),
+                resolveAttrColor(MaterialR.attr.colorOnPrimaryContainer, Color.WHITE),
             )
             val pad = dp(14)
             setPadding(pad, pad, pad, pad)
             contentDescription = "Save manager floating button. Tap for backup and restore."
             setOnTouchListener(DragListener { togglePanel() })
         }
-        windowManager.addView(fab, fabParams)
+        try {
+            windowManager.addView(fab, fabParams)
+        } catch (e: Exception) {
+            // e.g. overlay permission revoked mid-run: say so, don't just vanish.
+            fab = null
+            toast("Couldn't show the floating button: ${e.message}")
+            stopSelf()
+        }
     }
 
     private fun togglePanel() {
@@ -177,10 +190,21 @@ class OverlayService : Service() {
             .apply()
     }
 
-    private fun resolveAttrColor(attr: Int): Int {
+    private fun resolveAttrColor(attr: Int, fallback: Int): Int {
         val out = TypedValue()
-        theme.resolveAttribute(attr, out, true)
-        return out.data
+        return if (theme.resolveAttribute(attr, out, true)) out.data else fallback
+    }
+
+    /** Dynamic oval background, with a plain-purple fallback that always renders. */
+    private fun fabBackground(): Drawable {
+        return try {
+            resources.getDrawable(R.drawable.fab_background, theme)
+        } catch (_: Exception) {
+            GradientDrawable().apply {
+                shape = GradientDrawable.OVAL
+                setColor(FALLBACK_CONTAINER)
+            }
+        }
     }
 
     /**
