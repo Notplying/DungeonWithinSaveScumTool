@@ -11,8 +11,23 @@ android {
         applicationId = "com.dungeonwithin.savemanager"
         minSdk = 26
         targetSdk = 34
-        versionCode = 1
+        // CI run number keeps every cloud build newer than the last, so
+        // installs update instead of clashing. Local builds stay at 1.
+        versionCode = (System.getenv("GITHUB_RUN_NUMBER")?.toIntOrNull() ?: 1)
         versionName = "1.0"
+    }
+
+    signingConfigs {
+        // Pinned debug key: throwaway CI runners generate a fresh key every
+        // build, which changes the APK signature and forces uninstalls.
+        // (Debug-only key for sideloading; never use for store releases.)
+        getByName("debug") {
+            storeFile = file("debug.keystore")
+            storePassword = "android"
+            keyAlias = "androiddebugkey"
+            keyPassword = "android"
+            storeType = "PKCS12"
+        }
     }
 
     buildTypes {

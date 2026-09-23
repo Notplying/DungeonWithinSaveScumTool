@@ -39,6 +39,9 @@ The app itself needs no network permission and works fully offline.
    tag publishes one). No fresh release? The latest **Build APK** workflow
    run has the same file under Artifacts → `DungeonWithinSaveManager-apk`.
 2. Install it: tap the APK on the device, or `adb install DungeonWithinSaveManager.apk`.
+   Updates install over the old copy — but if you installed a build from
+   before the signing fix, uninstall once first (its signature was a
+   one-off), then updates work from there on.
 3. Open **Dungeon Save Manager** and follow the on-screen checklist:
    install/start/authorize Shizuku, then allow “Display over other apps”.
 
