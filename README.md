@@ -17,9 +17,18 @@ Usage:
 
 ## Android on-device app (non-root, no PC)
 
-`android/` holds a Kotlin app that does the same backup/restore entirely on
-the device: a floating save-logo button backed by the
-[Shizuku app](https://play.google.com/store/apps/details?id=moe.shizuku.privileged.api)
-for privileged shell access (see `android/README.md` for install/usage).
-Grab DungeonWithinSaveManager.apk from the Releases page, it's published
-automatically — no Android Studio needed. The Windows app above is untouched.
+No PC? there's an app for that, same backup/restore but it all happens on
+the device. Little save logo floats over the game, tap it to back up or
+restore, done.
+
+Needs the [Shizuku app](https://play.google.com/store/apps/details?id=moe.shizuku.privileged.api),
+normal apps can't touch another app's save folder so Shizuku does the heavy
+lifting. Open Shizuku once, do the wireless debugging pairing (no PC needed
+on Android 11+), re-do it after every reboot.
+
+- Grab DungeonWithinSaveManager.apk from the Releases page on the right
+- Tap it to install
+- Open it, follow the checklist, hit "Start floating button"
+- Restore closes the game, swaps the backup in, reopens it. No backup =
+  nothing happens, the game stays open
+- Details for nerds in android/README.md
