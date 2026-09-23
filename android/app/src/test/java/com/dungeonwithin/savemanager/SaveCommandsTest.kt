@@ -76,6 +76,16 @@ class SaveCommandsTest {
         assertFalse(SavePaths.buildLaunchShell().contains("monkey"))
     }
 
+    @Test
+    fun launch_shellVariableSurvivesKotlinTemplates() {
+        // Regression: `$cmp` must reach the device shell verbatim. A bare
+        // `$cmp` won't compile and an over-escaped `\${'$'}cmp` compiles but
+        // ships the escape sequence to the shell, breaking the relaunch.
+        val cmd = SavePaths.buildLaunchShell()
+        assertTrue(cmd.contains("\$cmp"))
+        assertFalse(cmd.contains("\${'$'}"))
+    }
+
     // ---------- SaveRepository: restore flow ----------
 
     @Test

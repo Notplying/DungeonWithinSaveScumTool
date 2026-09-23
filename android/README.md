@@ -2,7 +2,7 @@
 
 Floating **save-logo button** that backs up and restores the DungeonWithin save
 file entirely on-device — no PC, no ADB cable, no root. Privileged shell
-access goes through the [Shizuku](https://shizuku.rikka.app/) app, which
+access goes through the [Shizuku](https://play.google.com/store/apps/details?id=moe.shizuku.privileged.api) app, which
 grants ADB-level rights on the device itself.
 
 The UI follows the system Material You theme (wallpaper dynamic color,
