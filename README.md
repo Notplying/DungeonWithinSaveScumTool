@@ -3,7 +3,7 @@
 
 AI SLOP
 
-Made for Windows running android emulators (Only tested with MumuPlayer), made can be used for any android devices as long as adb is accessible.
+Made for Windows running android emulators (Only tested with MumuPlayer), can be used for any android devices as long as adb is accessible.
 
 Needs python, there's a "Install_Dependencies.bat" to install the python with just one click (Not tested since i'm not bothering to uninstall my python)
 
