@@ -148,7 +148,7 @@ class OverlayService : Service() {
     private fun runOp(op: SaveOp) {
         toast("Working…")
         Thread {
-            val outcome = SaveOperations.execute(op)
+            val outcome = SaveOperations.execute(op, this@OverlayService)
             // Success fits one line; failures carry guidance ("Looked for: …",
             // "Launch … manually") that the overlay user must see in full.
             val text = if (outcome is SaveRepository.Outcome.Ok) {

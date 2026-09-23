@@ -146,7 +146,7 @@ class MainActivity : Activity() {
         refreshButtons()
         statusView.text = "Working…"
         Thread {
-            val outcome = SaveOperations.execute(op)
+            val outcome = SaveOperations.execute(op, this@MainActivity)
             val summary = if (outcome is SaveRepository.Outcome.Ok) {
                 "${op.label} OK"
             } else {

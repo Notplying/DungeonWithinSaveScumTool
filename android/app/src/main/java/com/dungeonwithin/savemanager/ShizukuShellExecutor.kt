@@ -1,53 +1,105 @@
 package com.dungeonwithin.savemanager
 
+import android.content.ComponentName
+import android.content.Context
+import android.content.ServiceConnection
+import android.os.IBinder
+import android.os.Parcel
+import android.os.RemoteException
 import rikka.shizuku.Shizuku
+import rikka.shizuku.Shizuku.UserServiceArgs
 import java.io.IOException
+import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
 
 /** Thrown when the Shizuku binder is unreachable (not installed / not started). */
 class ShizukuNotBoundException : IOException("Shizuku is not running")
 
 /**
- * [ShellExecutor] that runs each script through Shizuku's privileged
- * `sh -c`, i.e. with the shell (ADB) identity — the on-device equivalent
- * of `adb shell` from the Windows app.
+ * [ShellExecutor] that runs each script in [ShellUserService], bound through
+ * Shizuku with the shell identity. (`Shizuku.newProcess` is private since
+ * 13.1.x; UserService is the supported path.)
  *
- * Must be called off the main thread: stream draining blocks.
+ * Must be called off the main thread: binding and transact block.
  */
-class ShizukuShellExecutor : ShellExecutor {
+class ShizukuShellExecutor(context: Context) : ShellExecutor {
+    private val appContext = context.applicationContext
+
     override fun run(script: String, timeoutSeconds: Long): ShellExecutor.Result {
         if (!Shizuku.pingBinder()) throw ShizukuNotBoundException()
-        val process = Shizuku.newProcess(arrayOf("sh", "-c", script), null, null)
-
-        val stdout = StringBuilder()
-        val stderr = StringBuilder()
-        val outReader = Thread {
-            try {
-                process.inputStream.bufferedReader().use { stdout.append(it.readText()) }
-            } catch (_: Exception) {
-                // Process destroyed mid-read; partial output is still usable.
-            }
-        }
-        val errReader = Thread {
-            try {
-                process.errorStream.bufferedReader().use { stderr.append(it.readText()) }
-            } catch (_: Exception) {
-                // Same as above.
-            }
-        }
-        outReader.start()
-        errReader.start()
+        val service = ShellServiceHolder.acquire(appContext)
+        val data = Parcel.obtain()
+        val reply = Parcel.obtain()
         try {
-            if (!process.waitFor(timeoutSeconds, TimeUnit.SECONDS)) {
-                process.destroy()
-                return ShellExecutor.Result(timeoutSeconds.toInt(), stdout.toString(), "timed out")
-            }
-            val code = process.exitValue()
-            outReader.join(2_000)
-            errReader.join(2_000)
-            return ShellExecutor.Result(code, stdout.toString(), stderr.toString())
+            data.writeString(script)
+            data.writeLong(timeoutSeconds)
+            service.transact(ShellUserService.TRANSACTION_EXEC, data, reply, 0)
+            reply.readException()
+            return ShellExecutor.Result(
+                reply.readInt(),
+                reply.readString() ?: "",
+                reply.readString() ?: "",
+            )
+        } catch (e: RemoteException) {
+            throw IOException("Privileged shell call failed", e)
         } finally {
-            process.destroy()
+            reply.recycle()
+            data.recycle()
+        }
+    }
+}
+
+/** Binds [ShellUserService] once and hands out the live Binder. */
+internal object ShellServiceHolder {
+    private const val BIND_TIMEOUT_SECONDS = 20L
+
+    /** Bump when [ShellUserService] changes so Shizuku retires old instances. */
+    private const val SERVICE_VERSION = 1
+
+    private val lock = Any()
+    private val bindLock = Any()
+    private var binder: IBinder? = null
+
+    fun acquire(context: Context): IBinder {
+        // Binding is serialized; the transact callback only needs `lock`.
+        synchronized(bindLock) {
+            synchronized(lock) {
+                binder?.let { return it }
+            }
+            val latch = CountDownLatch(1)
+            val connection = object : ServiceConnection {
+                override fun onServiceConnected(name: ComponentName?, service: IBinder?) {
+                    synchronized(lock) {
+                        binder = service
+                    }
+                    latch.countDown()
+                }
+
+                override fun onServiceDisconnected(name: ComponentName?) {
+                    synchronized(lock) {
+                        binder = null
+                    }
+                }
+            }
+            val args = UserServiceArgs(
+                ComponentName(context.packageName, ShellUserService::class.java.name),
+            )
+                .daemon(false)
+                .processNameSuffix("shell")
+                .version(SERVICE_VERSION)
+            try {
+                Shizuku.bindUserService(args, connection)
+            } catch (e: IllegalStateException) {
+                throw IOException("Shizuku binder unavailable", e)
+            }
+            // Kept bound for the app lifetime; Shizuku owns the remote process.
+            if (!latch.await(BIND_TIMEOUT_SECONDS, TimeUnit.SECONDS)) {
+                runCatching { Shizuku.unbindUserService(connection) }
+                throw IOException("Timed out starting privileged shell service")
+            }
+            synchronized(lock) {
+                return binder ?: throw IOException("Privileged shell service unavailable")
+            }
         }
     }
 }

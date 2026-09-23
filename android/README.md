@@ -67,7 +67,8 @@ android/
     src/main/java/.../SaveOp.kt              # Backup vs Restore domain type
     src/main/java/.../SaveOperations.kt      # shared run entry point + error mapping
     src/main/java/.../Ui.kt                  # toast/dp helpers
-    src/main/java/.../ShizukuShellExecutor.kt# Shizuku.newProcess backend
+    src/main/java/.../ShizukuShellExecutor.kt# client: binds the UserService over Shizuku
+    src/main/java/.../ShellUserService.kt   # runs in Shizuku's shell process (sh -c)
     src/main/java/.../ShizukuHelper.kt       # install/binder/permission gates
     src/main/java/.../MainActivity.kt        # setup checklist + manual buttons
     src/main/java/.../OverlayService.kt      # floating button foreground service
