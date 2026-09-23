@@ -12,6 +12,7 @@ import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
 import com.google.android.material.R as MaterialR
 import com.google.android.material.button.MaterialButton
+import com.google.android.material.switchmaterial.SwitchMaterial
 import rikka.shizuku.Shizuku
 
 /**
@@ -30,6 +31,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var restoreButton: MaterialButton
     private lateinit var batteryButton: MaterialButton
     private lateinit var stopButton: MaterialButton
+    private lateinit var notificationsSwitch: SwitchMaterial
     private var working = false
 
     private val binderReceivedListener = Shizuku.OnBinderReceivedListener {
@@ -84,12 +86,20 @@ class MainActivity : AppCompatActivity() {
                 toast("Floating button stopped.")
             }
         }
+        notificationsSwitch = SwitchMaterial(this).apply {
+            text = "Result notifications"
+            isChecked = AppSettings.areResultNotificationsEnabled(this@MainActivity)
+            setOnCheckedChangeListener { _, checked ->
+                AppSettings.setResultNotificationsEnabled(this@MainActivity, checked)
+            }
+        }
         column.addView(shizukuButton)
         column.addView(overlayButton)
         column.addView(batteryButton)
         column.addView(backupButton)
         column.addView(restoreButton)
         column.addView(stopButton)
+        column.addView(notificationsSwitch)
         column.addView(TextView(this).apply {
             text = "Restore closes the game, replaces its save with your backup, " +
                 "then relaunches it. Backups live in Download/save.es3 (overwritten each time)."
@@ -228,6 +238,10 @@ class MainActivity : AppCompatActivity() {
             "Allow unrestricted battery"
         }
         batteryButton.isEnabled = !unrestricted && !working
+        val notifOn = AppSettings.areResultNotificationsEnabled(this)
+        if (::notificationsSwitch.isInitialized && notificationsSwitch.isChecked != notifOn) {
+            notificationsSwitch.isChecked = notifOn
+        }
         refreshButtons()
     }
 

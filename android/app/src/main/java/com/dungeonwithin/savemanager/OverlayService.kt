@@ -228,6 +228,7 @@ class OverlayService : Service() {
      * outcome still surfaces over the game. Tap opens the app for details.
      */
     private fun notifyResult(title: String, message: String) {
+        if (!AppSettings.areResultNotificationsEnabled(this)) return
         val manager = getSystemService(NOTIFICATION_SERVICE) as NotificationManager
         manager.createNotificationChannel(
             NotificationChannel(RESULTS_CHANNEL_ID, "Backup results", NotificationManager.IMPORTANCE_HIGH),

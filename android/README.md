@@ -60,6 +60,9 @@ No Android Studio or local SDK is needed — GitHub Actions compiles the APK.
   so the system is less likely to kill the floating button's service.
 - **Stop floating button**: dismisses the overlay from the app (same as
   press-and-hold on the logo).
+- **Result notifications** switch: backup/restore outcomes also arrive as a
+  heads-up notification — turn it off here to keep only the in-panel result
+  line and toasts.
 
 ## Project layout
 
