@@ -28,11 +28,13 @@ jobs:
           java-version: "17"
           cache: gradle
 
-      - name: Set up Android SDK
-        uses: android-actions/setup-android@v3
-
       - name: Install compile SDK packages
-        run: sdkmanager "platforms;android-34" "build-tools;34.0.0"
+        # ubuntu runners ship an SDK with cmdline-tools preinstalled.
+        # android-actions/setup-android is avoided: v3 requests the
+        # long-removed "tools" package and fails the whole job.
+        run: |
+          yes | sdkmanager --licenses > /dev/null
+          sdkmanager "platforms;android-34" "build-tools;34.0.0"
 
       - name: Unit tests
         run: chmod +x gradlew && ./gradlew :app:testDebugUnitTest
