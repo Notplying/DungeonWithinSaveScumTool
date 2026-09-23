@@ -34,6 +34,16 @@ object SavePaths {
     /** Closes the game (no-op if not running). */
     fun buildForceStopShell(): String = "am force-stop $PACKAGE"
 
-    /** Cold-launches the game via its launcher entry. */
-    fun buildLaunchShell(): String = "monkey -p $PACKAGE -c android.intent.category.LAUNCHER 1"
+    /**
+     * Cold-launches the game via its resolved launcher entry.
+     *
+     * Deliberately NOT `monkey`: monkey injects random system events
+     * (including screen rotation) that leak into device settings. Resolving
+     * the MAIN/LAUNCHER component and `am start`-ing it touches nothing else.
+     */
+    fun buildLaunchShell(): String =
+        "cmp=$(cmd package resolve-activity --brief " +
+            "-a android.intent.action.MAIN -c android.intent.category.LAUNCHER " +
+            "$PACKAGE | tail -n 1); " +
+            "if [ -n \"$cmp\" ]; then am start -n \"$cmp\"; else exit 1; fi"
 }

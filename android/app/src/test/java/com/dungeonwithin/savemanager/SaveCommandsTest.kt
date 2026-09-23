@@ -64,8 +64,16 @@ class SaveCommandsTest {
     @Test
     fun launch_targetsPackage() {
         val cmd = SavePaths.buildLaunchShell()
-        assertTrue(cmd.contains("monkey"))
+        assertTrue(cmd.contains("am start"))
         assertTrue(cmd.contains(SavePaths.PACKAGE))
+        assertTrue(cmd.contains("resolve-activity"))
+    }
+
+    @Test
+    fun launch_doesNotUseMonkey() {
+        // monkey injects random system events (incl. screen rotation);
+        // the launch must be a deterministic am start.
+        assertFalse(SavePaths.buildLaunchShell().contains("monkey"))
     }
 
     // ---------- SaveRepository: restore flow ----------
@@ -79,7 +87,7 @@ class SaveCommandsTest {
         val scripts = fake.scripts
         val idxStop = scripts.indexOfFirst { it.contains("force-stop") }
         val idxCopy = scripts.indexOfFirst { it.contains("cp -f") }
-        val idxLaunch = scripts.indexOfFirst { it.contains("monkey") }
+        val idxLaunch = scripts.indexOfFirst { it.contains("am start") }
         assertTrue("force-stop must run", idxStop >= 0)
         assertTrue("copy must run", idxCopy >= 0)
         assertTrue("relaunch must run", idxLaunch >= 0)
@@ -98,7 +106,7 @@ class SaveCommandsTest {
         assertTrue(outcome is SaveRepository.Outcome.Err)
         val all = fake.scripts.joinToString("\n")
         assertFalse("must not close game without backup", all.contains("force-stop"))
-        assertFalse("must not relaunch without backup", all.contains("monkey"))
+        assertFalse("must not relaunch without backup", all.contains("am start"))
         assertTrue(outcome.message.contains("No backup found"))
     }
 
@@ -116,7 +124,7 @@ class SaveCommandsTest {
 
     @Test
     fun restore_reportsWhenRelaunchFails_butKeepsSave() {
-        val fake = FakeShell(monkeyExitCode = 1)
+        val fake = FakeShell(launchExitCode = 1)
         val outcome = SaveRepository(fake).doRestore()
 
         // The save itself was still restored.
@@ -150,7 +158,7 @@ class SaveCommandsTest {
         private val primaryPresent: Boolean = true,
         private val altPresent: Boolean = true,
         private val gameSavePresent: Boolean = true,
-        private val monkeyExitCode: Int = 0,
+        private val launchExitCode: Int = 0,
     ) : ShellExecutor {
         val scripts = mutableListOf<String>()
 
@@ -172,8 +180,8 @@ class SaveCommandsTest {
                     "",
                 )
             }
-            if (script.contains("monkey")) {
-                return ShellExecutor.Result(monkeyExitCode, "Events injected: 1", "")
+            if (script.contains("am start")) {
+                return ShellExecutor.Result(launchExitCode, "Starting: Intent", "")
             }
             if (script.startsWith("pidof")) {
                 return ShellExecutor.Result(0, "12345", "")

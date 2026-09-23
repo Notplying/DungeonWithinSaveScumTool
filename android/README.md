@@ -17,7 +17,7 @@ same paths, same ordering, same pre-check guarantees.
 | Restore pre-check | backup must exist **before** the game is touched |
 | Restore 1. close | `am force-stop com.GameCoaster.DungeonWithin` |
 | Restore 2. copy | `cp -f` from `/sdcard/Download/save.es3` (fallback `/sdcard/Downloads/save.es3`) |
-| Restore 3. relaunch | `monkey -p com.GameCoaster.DungeonWithin -c android.intent.category.LAUNCHER 1`, then verify with `pidof` |
+| Restore 3. relaunch | resolve the MAIN/LAUNCHER component, then `am start -n` it (no `monkey`: monkey injects random system events like rotation), then verify with `pidof` |
 
 Game save: `/sdcard/Android/data/com.GameCoaster.DungeonWithin/files/save.es3`
 (regular apps can't read another app's `Android/data` since Android 11 —
