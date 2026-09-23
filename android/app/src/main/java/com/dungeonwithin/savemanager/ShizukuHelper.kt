@@ -18,9 +18,6 @@ object ShizukuHelper {
 
     const val PERMISSION_REQUEST_CODE = 1001
 
-    fun isManagerInstalled(pm: PackageManager): Boolean =
-        MANAGER_PACKAGES.any { isPackageInstalled(pm, it) }
-
     fun installedManagerPackage(pm: PackageManager): String? =
         MANAGER_PACKAGES.firstOrNull { isPackageInstalled(pm, it) }
 

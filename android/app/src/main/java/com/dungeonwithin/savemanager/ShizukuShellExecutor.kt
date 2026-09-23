@@ -66,43 +66,61 @@ internal object ShellServiceHolder {
             synchronized(lock) {
                 binder?.let { return it }
             }
-            val latch = CountDownLatch(1)
-            val connection = object : ServiceConnection {
-                override fun onServiceConnected(name: ComponentName?, service: IBinder?) {
-                    synchronized(lock) {
-                        binder = service
-                    }
-                    latch.countDown()
+            // One retry: the first bind can lose to Shizuku still starting
+            // its side or a slow first spawn of the :shell process.
+            var lastError: IOException? = null
+            repeat(2) {
+                try {
+                    return bindOnce(context)
+                } catch (e: IOException) {
+                    lastError = e
                 }
+            }
+            throw lastError ?: IOException("Privileged shell service unavailable")
+        }
+    }
 
-                override fun onServiceDisconnected(name: ComponentName?) {
-                    synchronized(lock) {
-                        binder = null
-                    }
+    @Throws(IOException::class)
+    private fun bindOnce(context: Context): IBinder {
+        val latch = CountDownLatch(1)
+        val connection = object : ServiceConnection {
+            override fun onServiceConnected(name: ComponentName?, service: IBinder?) {
+                synchronized(lock) {
+                    binder = service
+                }
+                latch.countDown()
+            }
+
+            override fun onServiceDisconnected(name: ComponentName?) {
+                synchronized(lock) {
+                    binder = null
                 }
             }
-            val args = UserServiceArgs(
-                ComponentName(context.packageName, ShellUserService::class.java.name),
+        }
+        val args = UserServiceArgs(
+            ComponentName(context.packageName, ShellUserService::class.java.name),
+        )
+            .daemon(false)
+            .processNameSuffix("shell")
+            .version(SERVICE_VERSION)
+        try {
+            Shizuku.bindUserService(args, connection)
+        } catch (e: IllegalStateException) {
+            throw IOException("Shizuku binder unavailable", e)
+        }
+        // Kept bound for the app lifetime; Shizuku owns the remote process.
+        // NOTE: unbind takes (args, connection, remove), not just the
+        // connection — remove=true also retires a late-starting instance
+        // via our destroy transact.
+        if (!latch.await(BIND_TIMEOUT_SECONDS, TimeUnit.SECONDS)) {
+            runCatching { Shizuku.unbindUserService(args, connection, true) }
+            throw IOException(
+                "Timed out starting privileged shell service. Open Shizuku, " +
+                    "make sure it is started and this app is allowed, then retry.",
             )
-                .daemon(false)
-                .processNameSuffix("shell")
-                .version(SERVICE_VERSION)
-            try {
-                Shizuku.bindUserService(args, connection)
-            } catch (e: IllegalStateException) {
-                throw IOException("Shizuku binder unavailable", e)
-            }
-            // Kept bound for the app lifetime; Shizuku owns the remote process.
-            // NOTE: unbind takes (args, connection, remove), not just the
-            // connection — remove=true also retires a late-starting instance
-            // via our destroy transact.
-            if (!latch.await(BIND_TIMEOUT_SECONDS, TimeUnit.SECONDS)) {
-                runCatching { Shizuku.unbindUserService(args, connection, true) }
-                throw IOException("Timed out starting privileged shell service")
-            }
-            synchronized(lock) {
-                return binder ?: throw IOException("Privileged shell service unavailable")
-            }
+        }
+        synchronized(lock) {
+            return binder ?: throw IOException("Privileged shell service unavailable")
         }
     }
 }

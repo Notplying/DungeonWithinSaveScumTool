@@ -64,6 +64,16 @@ No Android Studio or local SDK is needed — GitHub Actions compiles the APK.
   heads-up notification — turn it off here to keep only the in-panel result
   line and toasts.
 
+## If backup/restore fails
+
+- “Shizuku hasn't allowed this app”: open Shizuku → authorized apps (or its
+  permission popup) and allow Dungeon Save Manager, then retry.
+- “Timed out starting privileged shell service”: Shizuku is mid-start or the
+  first spawn is slow — wait a few seconds and retry once. Still failing?
+  Re-start Shizuku itself.
+- Nothing at all happens on tap: the device is swallowing toasts — check the
+  in-panel result line, the notification, or the app's status log instead.
+
 ## Project layout
 
 ```
@@ -80,7 +90,7 @@ android/
     src/main/java/.../Ui.kt                  # toast/dp helpers
     src/main/java/.../ShizukuShellExecutor.kt# client: binds the UserService over Shizuku
     src/main/java/.../ShellUserService.kt   # runs in Shizuku's shell process (sh -c)
-    src/main/java/.../ShizukuHelper.kt       # install/binder/permission gates
+    src/main/java/.../ShizukuHelper.kt       # binder/permission gates + Shizuku intents
     src/main/java/.../MainActivity.kt        # setup checklist + manual buttons
     src/main/java/.../OverlayService.kt      # floating button foreground service
     src/test/java/.../SaveCommandsTest.kt    # ports TestCommands + TestRestoreFlow

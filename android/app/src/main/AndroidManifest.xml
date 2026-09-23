@@ -11,6 +11,13 @@
     <!-- Shizuku privileged-shell API (non-root access to Android/data). -->
     <uses-permission android:name="moe.shizuku.manager.permission.API_V23" />
 
+    <!-- Package visibility (Android 11+): without this, Shizuku looks
+         "not installed" even when it is, and it can't be opened by intent. -->
+    <queries>
+        <package android:name="rikka.shizuku" />
+        <package android:name="moe.shizuku.privileged.api" />
+    </queries>
+
     <!-- No network permission: the app works fully offline on-device. -->
 
     <application

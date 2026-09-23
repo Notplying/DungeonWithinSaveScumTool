@@ -16,8 +16,8 @@ import com.google.android.material.switchmaterial.SwitchMaterial
 import rikka.shizuku.Shizuku
 
 /**
- * Setup + manual controls. Guides the user through the three gates
- * (Shizuku installed → running → authorized, plus overlay permission),
+ * Setup + manual controls. Guides the user through the gates
+ * (Shizuku running → authorized, plus overlay permission),
  * then offers the same Back Up / Restore the floating button provides.
  *
  * All shell work runs off the main thread via [SaveRepository].
@@ -128,9 +128,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun onShizukuButton() {
-        val pm = packageManager
         when {
-            !ShizukuHelper.isManagerInstalled(pm) -> ShizukuHelper.openStoreListing(this)
             !ShizukuHelper.isBinderAlive() -> {
                 toast("Opening Shizuku — press Start there, then come back.")
                 ShizukuHelper.openManager(this)
@@ -163,7 +161,7 @@ class MainActivity : AppCompatActivity() {
             return
         }
         OverlayService.start(this)
-        toast("Floating button started — look for SAVE on screen.")
+        toast("Floating button started — look for the logo on screen.")
     }
 
     private fun runOp(op: SaveOp) {
@@ -200,26 +198,27 @@ class MainActivity : AppCompatActivity() {
 
     private fun refreshStatus() {
         if (!::statusView.isInitialized) return
-        val pm = packageManager
-        val installed = ShizukuHelper.isManagerInstalled(pm)
-        val alive = installed && ShizukuHelper.isBinderAlive()
+        // No "is Shizuku installed" state: on Android 11+ the OS hides
+        // packages without a <queries> declaration (and some ROMs lie
+        // anyway), so that check false-negatives. Binder state + the store
+        // fallback in openManager cover both cases.
+        val alive = ShizukuHelper.isBinderAlive()
         val ready = alive && ShizukuHelper.isReady()
 
         statusView.text = when {
-            !installed -> "1/3 Shizuku is not installed.\nInstall “Shizuku” by RikkaApps, then start it " +
-                "via Wireless debugging pairing (Android 11+: no PC needed)."
-            !alive -> "2/3 Shizuku is installed but not running.\nOpen Shizuku and Start it " +
-                "(Wireless debugging), then return here. It must be restarted after every reboot."
+            !alive -> "Shizuku isn't running.\nOpen Shizuku and press Start " +
+                "(Wireless debugging pairing), then come back here. " +
+                "No Shizuku app? The button below takes you to its store page. " +
+                "It needs starting again after every reboot."
             !ready && ShizukuHelper.isPermanentlyDenied() ->
-                "3/3 Permission blocked.\nYou chose “don't ask again”: open Shizuku and allow " +
+                "Permission blocked.\nYou chose “don't ask again”: open Shizuku and allow " +
                     "this app under authorized apps."
-            !ready -> "3/3 Shizuku is running.\nGrant permission so the manager can copy save files."
+            !ready -> "Shizuku is running.\nGrant permission so the manager can copy save files."
             Settings.canDrawOverlays(this) ->
                 "Ready. Shizuku connected, overlay allowed — start the floating button."
             else -> "Ready. Shizuku connected — allow the overlay to start the floating button."
         }
         shizukuButton.text = when {
-            !installed -> "Install Shizuku"
             !alive -> "Open Shizuku"
             ShizukuHelper.isPermanentlyDenied() -> "Open Shizuku settings"
             !ready -> "Grant Shizuku permission"
