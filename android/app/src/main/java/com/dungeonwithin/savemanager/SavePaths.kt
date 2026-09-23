@@ -45,5 +45,5 @@ object SavePaths {
         "cmp=$(cmd package resolve-activity --brief " +
             "-a android.intent.action.MAIN -c android.intent.category.LAUNCHER " +
             "$PACKAGE | tail -n 1); " +
-            "if [ -n "${'$'}cmp" ]; then am start -n "${'$'}cmp"; else exit 1; fi"
+            "if [ -n \"${'$'}cmp\" ]; then am start -n \"${'$'}cmp\"; else exit 1; fi"
 }
