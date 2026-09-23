@@ -3,18 +3,6 @@
 
 AI SLOP
 
-Made for Windows running android emulators (Only tested with MumuPlayer), can be used for any android devices as long as adb is accessible.
-
-Needs python, there's a "Install_Dependencies.bat" to install the python with just one click (Not tested since i'm not bothering to uninstall my python)
-
-Usage:
-- Click the green "code" button on the upper middle of this page.
-- Click "Download ZIP"
-- Extract
-- Double click "Install_Dependencies.bat" (For the first time, IF you don't have python)
-- **double click "Start_SaveManager.vbs"** and voila, the UI should pop-up
-- Click the backup to backup, restore to automatically close the game, restore the backed up file, and re-starts the game.
-
 ## Android on-device app (non-root, no PC)
 
 No PC? there's an app for that, same backup/restore but it all happens on
@@ -26,9 +14,23 @@ normal apps can't touch another app's save folder so Shizuku does the heavy
 lifting. Open Shizuku once, do the wireless debugging pairing (no PC needed
 on Android 11+), re-do it after every reboot.
 
-- Grab DungeonWithinSaveManager.apk from the Releases page on the right
+- Grab DungeonWithinSaveManager.apk from the [Releases page](https://github.com/Notplying/DungeonWithinSaveScumTool/releases)
 - Tap it to install
 - Open it, follow the checklist, hit "Start floating button"
 - Restore closes the game, swaps the backup in, reopens it. No backup =
   nothing happens, the game stays open
 - Details for nerds in android/README.md
+
+## Windows app (needs a PC, adb over USB/network)
+
+Made for Windows running android emulators (Only tested with MumuPlayer), can be used for any android devices as long as adb is accessible.
+
+Needs python, there's a "Install_Dependencies.bat" to install the python with just one click (Not tested since i'm not bothering to uninstall my python)
+
+Usage:
+- Click the green "code" button on the upper middle of this page.
+- Click "Download ZIP"
+- Extract
+- Double click "Install_Dependencies.bat" (For the first time, IF you don't have python)
+- **double click "Start_SaveManager.vbs"** and voila, the UI should pop-up
+- Click the backup to backup, restore to automatically close the game, restore the backed up file, and re-starts the game.
