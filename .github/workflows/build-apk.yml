@@ -29,10 +29,13 @@ jobs:
           cache: gradle
 
       - name: Install compile SDK packages
-        # ubuntu runners ship an SDK with cmdline-tools preinstalled.
-        # android-actions/setup-android is avoided: v3 requests the
+        # ubuntu runners ship an SDK with cmdline-tools preinstalled, but
+        # sdkmanager is not on PATH (setup-android used to put it there).
+        # android-actions/setup-android itself is avoided: v3 requests the
         # long-removed "tools" package and fails the whole job.
         run: |
+          : "${ANDROID_SDK_ROOT:?Android SDK not found on runner}"
+          export PATH="$ANDROID_SDK_ROOT/cmdline-tools/latest/bin:$PATH"
           yes | sdkmanager --licenses > /dev/null
           sdkmanager "platforms;android-34" "build-tools;34.0.0"
 
