@@ -93,8 +93,11 @@ internal object ShellServiceHolder {
                 throw IOException("Shizuku binder unavailable", e)
             }
             // Kept bound for the app lifetime; Shizuku owns the remote process.
+            // NOTE: unbind takes (args, connection, remove), not just the
+            // connection — remove=true also retires a late-starting instance
+            // via our destroy transact.
             if (!latch.await(BIND_TIMEOUT_SECONDS, TimeUnit.SECONDS)) {
-                runCatching { Shizuku.unbindUserService(connection) }
+                runCatching { Shizuku.unbindUserService(args, connection, true) }
                 throw IOException("Timed out starting privileged shell service")
             }
             synchronized(lock) {

@@ -14,7 +14,7 @@ import java.util.concurrent.TimeUnit
  * constructor); clients never construct it directly, they talk to it via
  * [ShizukuShellExecutor] using the transact codes below.
  */
-class ShellUserService : Binder() {
+class ShellUserService : Binder {
 
     // v13 probes a (Context) constructor first; it is unused here.
     constructor() : super()
