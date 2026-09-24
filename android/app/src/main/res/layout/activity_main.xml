@@ -490,39 +490,32 @@
                     android:textColor="?android:attr/textColorSecondary"
                     android:textSize="12sp" />
 
-                <LinearLayout
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btn_start_overlay"
+                    style="@style/Widget.Material3.Button"
                     android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="horizontal">
+                    android:layout_height="48dp"
+                    android:layout_marginBottom="8dp"
+                    android:letterSpacing="0.02"
+                    android:text="Start Floating Overlay"
+                    android:textSize="13sp"
+                    app:cornerRadius="12dp"
+                    app:icon="@drawable/ic_play"
+                    app:iconGravity="textStart"
+                    app:iconSize="18dp" />
 
-                    <com.google.android.material.button.MaterialButton
-                        android:id="@+id/btn_start_overlay"
-                        style="@style/Widget.Material3.Button"
-                        android:layout_width="0dp"
-                        android:layout_height="48dp"
-                        android:layout_marginEnd="6dp"
-                        android:layout_weight="1"
-                        android:text="Start Overlay"
-                        android:textSize="13sp"
-                        app:cornerRadius="12dp"
-                        app:icon="@drawable/ic_play"
-                        app:iconGravity="textStart"
-                        app:iconSize="18dp" />
-
-                    <com.google.android.material.button.MaterialButton
-                        android:id="@+id/btn_stop_overlay"
-                        style="@style/Widget.Material3.Button.OutlinedButton"
-                        android:layout_width="0dp"
-                        android:layout_height="48dp"
-                        android:layout_marginStart="6dp"
-                        android:layout_weight="1"
-                        android:text="Stop Overlay"
-                        android:textSize="13sp"
-                        app:cornerRadius="12dp"
-                        app:icon="@drawable/ic_power"
-                        app:iconGravity="textStart"
-                        app:iconSize="16dp" />
-                </LinearLayout>
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btn_stop_overlay"
+                    style="@style/Widget.Material3.Button.OutlinedButton"
+                    android:layout_width="match_parent"
+                    android:layout_height="48dp"
+                    android:letterSpacing="0.02"
+                    android:text="Stop Floating Overlay"
+                    android:textSize="13sp"
+                    app:cornerRadius="12dp"
+                    app:icon="@drawable/ic_power"
+                    app:iconGravity="textStart"
+                    app:iconSize="16dp" />
 
                 <View
                     android:layout_width="match_parent"

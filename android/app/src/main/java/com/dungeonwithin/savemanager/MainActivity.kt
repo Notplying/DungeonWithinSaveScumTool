@@ -311,7 +311,7 @@ class MainActivity : AppCompatActivity() {
         restoreButton.isEnabled = ready && !working
 
         startOverlayButton.isEnabled = !working && !overlayRunning && overlayAllowed
-        startOverlayButton.text = if (overlayRunning) "Overlay Active" else "Start Overlay"
+        startOverlayButton.text = if (overlayRunning) "Floating Overlay is Active" else "Start Floating Overlay"
         stopOverlayButton.isEnabled = !working && overlayRunning
 
         overlayServiceStatusText.text = if (overlayRunning) {

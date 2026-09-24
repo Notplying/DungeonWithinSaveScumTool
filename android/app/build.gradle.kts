@@ -11,10 +11,30 @@ android {
         applicationId = "com.dungeonwithin.savemanager"
         minSdk = 26
         targetSdk = 34
-        // CI run number keeps every cloud build newer than the last, so
-        // installs update instead of clashing. Local builds stay at 1.
-        versionCode = (System.getenv("GITHUB_RUN_NUMBER")?.toIntOrNull() ?: 1)
-        versionName = "1.0"
+
+        // Monotonic build number based on git commit count with base offset.
+        // Legacy CI run numbers ranged from 1 to 28 across separate workflows.
+        // Base 1000 guarantees ANY new build (CI or local) is strictly higher
+        // than legacy builds, allowing seamless updates without uninstalling.
+        val gitCommitCount = runCatching {
+            val proc = ProcessBuilder("git", "rev-list", "--count", "HEAD")
+                .directory(rootDir)
+                .start()
+            val text = proc.inputStream.bufferedReader().readText().trim()
+            if (proc.waitFor() == 0) text.toIntOrNull() else null
+        }.getOrNull()
+
+        val baseOffset = 1000
+        val computedVersionCode = System.getenv("VERSION_CODE")?.toIntOrNull()
+            ?: if (gitCommitCount != null && gitCommitCount > 0) {
+                baseOffset + gitCommitCount
+            } else {
+                val runNum = System.getenv("GITHUB_RUN_NUMBER")?.toIntOrNull() ?: 1
+                baseOffset + runNum
+            }
+
+        versionCode = computedVersionCode
+        versionName = "1.0.$computedVersionCode"
     }
 
     signingConfigs {
@@ -27,11 +47,17 @@ android {
             keyAlias = "androiddebugkey"
             keyPassword = "android"
             storeType = "PKCS12"
+            v1SigningEnabled = true
+            v2SigningEnabled = true
         }
     }
 
     buildTypes {
+        debug {
+            signingConfig = signingConfigs.getByName("debug")
+        }
         release {
+            signingConfig = signingConfigs.getByName("debug")
             isMinifyEnabled = false
         }
     }
