@@ -47,8 +47,6 @@ android {
             keyAlias = "androiddebugkey"
             keyPassword = "android"
             storeType = "PKCS12"
-            v1SigningEnabled = true
-            v2SigningEnabled = true
         }
     }
 
