@@ -1,37 +1,55 @@
 package com.dungeonwithin.savemanager
 
 import android.content.Intent
-import android.graphics.Color
+import android.content.res.ColorStateList
 import android.net.Uri
 import android.os.Bundle
 import android.provider.Settings
-import android.view.Gravity
+import android.widget.ImageView
 import android.widget.LinearLayout
-import android.widget.ScrollView
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
-import com.google.android.material.R as MaterialR
+import androidx.core.content.ContextCompat
 import com.google.android.material.button.MaterialButton
+import com.google.android.material.progressindicator.LinearProgressIndicator
 import com.google.android.material.switchmaterial.SwitchMaterial
 import rikka.shizuku.Shizuku
 
 /**
- * Setup + manual controls. Guides the user through the gates
- * (Shizuku running → authorized, plus overlay permission),
- * then offers the same Back Up / Restore the floating button provides.
+ * Modern Setup & Manual Controls Activity.
  *
- * All shell work runs off the main thread via [SaveRepository].
+ * Guides the player through prerequisites (Shizuku, Overlay permission, Battery optimization),
+ * provides one-tap Backup and Restore actions with live feedback, and manages the floating overlay.
  */
 class MainActivity : AppCompatActivity() {
 
-    private lateinit var statusView: TextView
-    private lateinit var shizukuButton: MaterialButton
-    private lateinit var overlayButton: MaterialButton
+    private lateinit var headerStatusChip: TextView
+
     private lateinit var backupButton: MaterialButton
     private lateinit var restoreButton: MaterialButton
+    private lateinit var progressBar: LinearProgressIndicator
+    private lateinit var resultCard: LinearLayout
+    private lateinit var resultIcon: ImageView
+    private lateinit var resultTitle: TextView
+    private lateinit var resultDetail: TextView
+
+    private lateinit var shizukuDesc: TextView
+    private lateinit var shizukuStatusChip: TextView
+    private lateinit var shizukuButton: MaterialButton
+
+    private lateinit var overlayDesc: TextView
+    private lateinit var overlayStatusChip: TextView
+    private lateinit var overlayPermButton: MaterialButton
+
+    private lateinit var batteryDesc: TextView
+    private lateinit var batteryStatusChip: TextView
     private lateinit var batteryButton: MaterialButton
-    private lateinit var stopButton: MaterialButton
+
+    private lateinit var startOverlayButton: MaterialButton
+    private lateinit var stopOverlayButton: MaterialButton
+    private lateinit var overlayServiceStatusText: TextView
     private lateinit var notificationsSwitch: SwitchMaterial
+
     private var working = false
 
     private val binderReceivedListener = Shizuku.OnBinderReceivedListener {
@@ -47,77 +65,67 @@ class MainActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        setContentView(R.layout.activity_main)
 
-        val column = LinearLayout(this).apply {
-            orientation = LinearLayout.VERTICAL
-            setPadding(dp(20), dp(20), dp(20), dp(20))
-        }
-        column.addView(TextView(this).apply {
-            text = "Dungeon Save Manager"
-            textSize = 22f
-        })
-        column.addView(TextView(this).apply {
-            text = "DungeonWithin · save.es3 · on-device backup"
-            textSize = 13f
-        })
-        statusView = TextView(this).apply {
-            textSize = 14f
-            setPadding(0, dp(16), 0, dp(8))
-        }
-        column.addView(statusView)
-
-        shizukuButton = MaterialButton(this).apply { setOnClickListener { onShizukuButton() } }
-        overlayButton = MaterialButton(this).apply { setOnClickListener { onOverlayButton() } }
-        backupButton = MaterialButton(this).apply {
-            text = "Back Up Now"
-            setOnClickListener { runOp(SaveOp.BACKUP) }
-        }
-        restoreButton = MaterialButton(this).apply {
-            text = "Restore"
-            setOnClickListener { runOp(SaveOp.RESTORE) }
-        }
-        batteryButton = MaterialButton(this).apply {
-            setOnClickListener { BatteryHelper.requestUnrestricted(this@MainActivity) }
-        }
-        stopButton = MaterialButton(this).apply {
-            text = "Stop floating button"
-            setOnClickListener {
-                stopService(Intent(this@MainActivity, OverlayService::class.java))
-                toast("Floating button stopped.")
-            }
-        }
-        notificationsSwitch = SwitchMaterial(this).apply {
-            text = "Result notifications"
-            isChecked = AppSettings.areResultNotificationsEnabled(this@MainActivity)
-            setOnCheckedChangeListener { _, checked ->
-                AppSettings.setResultNotificationsEnabled(this@MainActivity, checked)
-            }
-        }
-        column.addView(shizukuButton)
-        column.addView(overlayButton)
-        column.addView(batteryButton)
-        column.addView(backupButton)
-        column.addView(restoreButton)
-        column.addView(stopButton)
-        column.addView(notificationsSwitch)
-        column.addView(TextView(this).apply {
-            text = "Restore closes the game, replaces its save with your backup, " +
-                "then relaunches it. Backups live in Download/save.es3 (overwritten each time)."
-            textSize = 12f
-            setPadding(0, dp(12), 0, 0)
-        })
-
-        setContentView(ScrollView(this).apply { addView(column) })
+        initViews()
+        setupListeners()
 
         Shizuku.addBinderReceivedListener(binderReceivedListener)
         Shizuku.addBinderDeadListener(binderDeadListener)
         Shizuku.addRequestPermissionResultListener(permissionListener)
+
         refreshStatus()
+    }
+
+    private fun initViews() {
+        headerStatusChip = findViewById(R.id.main_header_status_chip)
+
+        backupButton = findViewById(R.id.btn_backup)
+        restoreButton = findViewById(R.id.btn_restore)
+        progressBar = findViewById(R.id.main_progress)
+        resultCard = findViewById(R.id.card_result)
+        resultIcon = findViewById(R.id.result_icon)
+        resultTitle = findViewById(R.id.result_title)
+        resultDetail = findViewById(R.id.result_detail)
+
+        shizukuDesc = findViewById(R.id.shizuku_desc)
+        shizukuStatusChip = findViewById(R.id.shizuku_status_chip)
+        shizukuButton = findViewById(R.id.btn_shizuku)
+
+        overlayDesc = findViewById(R.id.overlay_perm_desc)
+        overlayStatusChip = findViewById(R.id.overlay_status_chip)
+        overlayPermButton = findViewById(R.id.btn_overlay_perm)
+
+        batteryDesc = findViewById(R.id.battery_desc)
+        batteryStatusChip = findViewById(R.id.battery_status_chip)
+        batteryButton = findViewById(R.id.btn_battery)
+
+        startOverlayButton = findViewById(R.id.btn_start_overlay)
+        stopOverlayButton = findViewById(R.id.btn_stop_overlay)
+        overlayServiceStatusText = findViewById(R.id.overlay_service_status_text)
+        notificationsSwitch = findViewById(R.id.switch_notifications)
+    }
+
+    private fun setupListeners() {
+        shizukuButton.setOnClickListener { onShizukuButton() }
+        overlayPermButton.setOnClickListener { onOverlayPermButton() }
+        batteryButton.setOnClickListener { BatteryHelper.requestUnrestricted(this) }
+
+        backupButton.setOnClickListener { runOp(SaveOp.BACKUP) }
+        restoreButton.setOnClickListener { runOp(SaveOp.RESTORE) }
+
+        startOverlayButton.setOnClickListener { onStartOverlay() }
+        stopOverlayButton.setOnClickListener { onStopOverlay() }
+
+        notificationsSwitch.isChecked = AppSettings.areResultNotificationsEnabled(this)
+        notificationsSwitch.setOnCheckedChangeListener { _, isChecked ->
+            AppSettings.setResultNotificationsEnabled(this, isChecked)
+        }
     }
 
     override fun onResume() {
         super.onResume()
-        if (::statusView.isInitialized) refreshStatus()
+        refreshStatus()
     }
 
     override fun onDestroy() {
@@ -130,11 +138,11 @@ class MainActivity : AppCompatActivity() {
     private fun onShizukuButton() {
         when {
             !ShizukuHelper.isBinderAlive() -> {
-                toast("Opening Shizuku — press Start there, then come back.")
+                toast("Opening Shizuku — press Start there, then return here.")
                 ShizukuHelper.openManager(this)
             }
             ShizukuHelper.isPermanentlyDenied() -> {
-                toast("Permission blocked — allow this app inside Shizuku.")
+                toast("Permission blocked — allow Dungeon Save Manager inside Shizuku.")
                 ShizukuHelper.openManager(this)
             }
             else -> try {
@@ -145,7 +153,7 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    private fun onOverlayButton() {
+    private fun onOverlayPermButton() {
         if (!Settings.canDrawOverlays(this)) {
             try {
                 startActivity(
@@ -154,102 +162,168 @@ class MainActivity : AppCompatActivity() {
                         Uri.fromParts("package", packageName, null),
                     ),
                 )
-                toast("Allow \"Display over other apps\", then come back.")
+                toast("Enable \"Display over other apps\", then return.")
             } catch (e: Exception) {
                 toast("Could not open overlay settings: ${e.message}")
             }
+        }
+    }
+
+    private fun onStartOverlay() {
+        if (!Settings.canDrawOverlays(this)) {
+            onOverlayPermButton()
             return
         }
         OverlayService.start(this)
-        toast("Floating button started — look for the logo on screen.")
+        toast("Floating button started — look for the icon on screen.")
+        refreshStatus()
+    }
+
+    private fun onStopOverlay() {
+        stopService(Intent(this, OverlayService::class.java))
+        toast("Floating button stopped.")
+        refreshStatus()
     }
 
     private fun runOp(op: SaveOp) {
         if (working) return
         working = true
-        refreshButtons()
-        statusView.text = "Working…"
+        progressBar.visibleOrGone(true)
+        backupButton.isEnabled = false
+        restoreButton.isEnabled = false
+        startOverlayButton.isEnabled = false
+        stopOverlayButton.isEnabled = false
+
+        resultCard.visibleOrGone(true)
+        resultTitle.text = "Executing ${op.label}…"
+        resultTitle.setTextColor(ContextCompat.getColor(this, R.color.text_primary_dark))
+        resultIcon.setImageResource(R.drawable.ic_info)
+        resultIcon.imageTintList =
+            ColorStateList.valueOf(ContextCompat.getColor(this, R.color.brand_primary))
+        resultDetail.text = "Communicating with game files via Shizuku shell…"
+
         Thread {
             val outcome = SaveOperations.execute(op, this@MainActivity)
-            val summary = if (outcome is SaveRepository.Outcome.Ok) {
-                "${op.label} OK"
-            } else {
-                "${op.label} failed"
-            }
+            val isOk = outcome is SaveRepository.Outcome.Ok
+            val summary = if (isOk) "${op.label} OK" else "${op.label} failed"
+
             runOnUiThread {
                 working = false
-                statusView.text = outcome.message
-                statusView.setTextColor(
-                    attrColor(
-                        if (outcome is SaveRepository.Outcome.Ok) {
-                            MaterialR.attr.colorPrimary
-                        } else {
-                            MaterialR.attr.colorError
-                        },
-                        if (outcome is SaveRepository.Outcome.Ok) Color.GREEN else Color.RED,
+                progressBar.visibleOrGone(false)
+
+                resultTitle.text = if (isOk) "${op.label} Succeeded" else "${op.label} Failed"
+                resultTitle.setTextColor(
+                    ContextCompat.getColor(
+                        this,
+                        if (isOk) R.color.status_ok_text else R.color.status_error_text,
                     ),
                 )
-                statusView.gravity = Gravity.START
-                toast("$summary — see details above.")
+                resultIcon.setImageResource(if (isOk) R.drawable.ic_check_circle else R.drawable.ic_error_circle)
+                resultIcon.imageTintList = ColorStateList.valueOf(
+                    ContextCompat.getColor(
+                        this,
+                        if (isOk) R.color.status_ok else R.color.status_error,
+                    ),
+                )
+                resultDetail.text = outcome.message
+
+                toast("$summary — see details below.")
                 refreshStatus()
             }
         }.start()
     }
 
     private fun refreshStatus() {
-        if (!::statusView.isInitialized) return
-        // No "is Shizuku installed" state: on Android 11+ the OS hides
-        // packages without a <queries> declaration (and some ROMs lie
-        // anyway), so that check false-negatives. Binder state + the store
-        // fallback in openManager cover both cases.
         val alive = ShizukuHelper.isBinderAlive()
         val ready = alive && ShizukuHelper.isReady()
-
-        statusView.text = when {
-            !alive -> "Shizuku isn't running.\nOpen Shizuku and press Start " +
-                "(Wireless debugging pairing), then come back here. " +
-                "No Shizuku app? The button below takes you to its store page. " +
-                "It needs starting again after every reboot."
-            !ready && ShizukuHelper.isPermanentlyDenied() ->
-                "Permission blocked.\nYou chose “don't ask again”: open Shizuku and allow " +
-                    "this app under authorized apps."
-            !ready -> "Shizuku is running.\nGrant permission so the manager can copy save files."
-            Settings.canDrawOverlays(this) ->
-                "Ready. Shizuku connected, overlay allowed — start the floating button."
-            else -> "Ready. Shizuku connected — allow the overlay to start the floating button."
-        }
-        shizukuButton.text = when {
-            !alive -> "Open Shizuku"
-            ShizukuHelper.isPermanentlyDenied() -> "Open Shizuku settings"
-            !ready -> "Grant Shizuku permission"
-            else -> "Shizuku ready"
-        }
-        shizukuButton.isEnabled = !ready && !working
-        overlayButton.text = if (Settings.canDrawOverlays(this)) {
-            "Start floating button"
-        } else {
-            "Allow overlay permission"
-        }
+        val overlayAllowed = Settings.canDrawOverlays(this)
         val unrestricted = BatteryHelper.isUnrestricted(this)
-        batteryButton.text = if (unrestricted) {
-            "Battery optimization off"
-        } else {
-            "Allow unrestricted battery"
-        }
-        batteryButton.isEnabled = !unrestricted && !working
-        val notifOn = AppSettings.areResultNotificationsEnabled(this)
-        if (::notificationsSwitch.isInitialized && notificationsSwitch.isChecked != notifOn) {
-            notificationsSwitch.isChecked = notifOn
-        }
-        refreshButtons()
-    }
+        val overlayRunning = OverlayService.isRunning
 
-    private fun refreshButtons() {
-        if (!::backupButton.isInitialized) return
-        val ready = ShizukuHelper.isReady()
+        // 1. Shizuku Row
+        when {
+            ready -> {
+                shizukuStatusChip.setStatusPill("Connected", StatusState.OK)
+                shizukuDesc.text = "Authorized and ready to manage saves"
+                shizukuButton.text = "Connected"
+                shizukuButton.isEnabled = false
+            }
+            alive && ShizukuHelper.isPermanentlyDenied() -> {
+                shizukuStatusChip.setStatusPill("Denied", StatusState.ERROR)
+                shizukuDesc.text = "Permission blocked: allow in Shizuku app"
+                shizukuButton.text = "Settings"
+                shizukuButton.isEnabled = !working
+            }
+            alive -> {
+                shizukuStatusChip.setStatusPill("Needs Auth", StatusState.WARN)
+                shizukuDesc.text = "Shizuku running: tap Grant to authorize"
+                shizukuButton.text = "Grant"
+                shizukuButton.isEnabled = !working
+            }
+            else -> {
+                shizukuStatusChip.setStatusPill("Not Running", StatusState.ERROR)
+                shizukuDesc.text = "Open Shizuku and start wireless debugging"
+                shizukuButton.text = "Open"
+                shizukuButton.isEnabled = !working
+            }
+        }
+
+        // 2. Overlay Permission Row
+        if (overlayAllowed) {
+            overlayStatusChip.setStatusPill("Allowed", StatusState.OK)
+            overlayDesc.text = "Permission granted to draw over DungeonWithin"
+            overlayPermButton.text = "Allowed"
+            overlayPermButton.isEnabled = false
+        } else {
+            overlayStatusChip.setStatusPill("Required", StatusState.WARN)
+            overlayDesc.text = "Required for the in-game floating save button"
+            overlayPermButton.text = "Allow"
+            overlayPermButton.isEnabled = !working
+        }
+
+        // 3. Battery Optimization Row
+        if (unrestricted) {
+            batteryStatusChip.setStatusPill("Unrestricted", StatusState.OK)
+            batteryDesc.text = "Service protected from Android battery optimizations"
+            batteryButton.text = "Exempt"
+            batteryButton.isEnabled = false
+        } else {
+            batteryStatusChip.setStatusPill("Optimized", StatusState.WARN)
+            batteryDesc.text = "Recommended: disable optimization to keep overlay running"
+            batteryButton.text = "Allow"
+            batteryButton.isEnabled = !working
+        }
+
+        // 4. Header Status Pill
+        when {
+            ready && overlayRunning ->
+                headerStatusChip.setStatusPill("Overlay Active", StatusState.OK)
+            ready ->
+                headerStatusChip.setStatusPill("Ready", StatusState.OK)
+            alive ->
+                headerStatusChip.setStatusPill("Auth Needed", StatusState.WARN)
+            else ->
+                headerStatusChip.setStatusPill("Setup Needed", StatusState.ERROR)
+        }
+
+        // 5. Actions & Overlay Buttons
         backupButton.isEnabled = ready && !working
         restoreButton.isEnabled = ready && !working
-        overlayButton.isEnabled = !working
-        batteryButton.isEnabled = !BatteryHelper.isUnrestricted(this) && !working
+
+        startOverlayButton.isEnabled = !working && !overlayRunning && overlayAllowed
+        startOverlayButton.text = if (overlayRunning) "Overlay Active" else "Start Overlay"
+        stopOverlayButton.isEnabled = !working && overlayRunning
+
+        overlayServiceStatusText.text = if (overlayRunning) {
+            "Floating HUD is active on screen · tap its button over game"
+        } else {
+            "Launch the draggable floating button over DungeonWithin"
+        }
+
+        // 6. Settings
+        val notifOn = AppSettings.areResultNotificationsEnabled(this)
+        if (notificationsSwitch.isChecked != notifOn) {
+            notificationsSwitch.isChecked = notifOn
+        }
     }
 }

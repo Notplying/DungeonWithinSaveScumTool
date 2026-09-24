@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Brand & Accent -->
+    <color name="brand_primary">#4F68D9</color>
+    <color name="brand_primary_tonal">#E8EDFB</color>
+    <color name="brand_on_primary">#FFFFFF</color>
+    <color name="brand_on_primary_tonal">#243266</color>
+
+    <!-- Surfaces & Cards (Light Theme default) -->
+    <color name="card_surface">#FFFFFF</color>
+    <color name="card_stroke">#E2E6F0</color>
+    <color name="divider_stroke">#ECEEF5</color>
+    <color name="card_result_bg">#F5F7FB</color>
+    <color name="icon_container_bg">#EEF2FC</color>
+    <color name="icon_container_tint">#4F68D9</color>
+
+    <!-- Floating Overlay HUD Theme (Fixed Dark Gaming Aesthetic) -->
+    <color name="overlay_panel_bg">#F2161720</color>
+    <color name="overlay_panel_stroke">#383E54</color>
+    <color name="overlay_fab_bg">#F21E202C</color>
+    <color name="overlay_fab_stroke">#495270</color>
+    <color name="overlay_text_primary">#F3F5FA</color>
+    <color name="overlay_text_secondary">#9DA5BA</color>
+
+    <!-- Semantic Status Colors -->
+    <color name="status_ok">#10B981</color>
+    <color name="status_ok_container">#E6F8F0</color>
+    <color name="status_ok_text">#059669</color>
+
+    <color name="status_warn">#F59E0B</color>
+    <color name="status_warn_container">#FEF3C7</color>
+    <color name="status_warn_text">#D97706</color>
+
+    <color name="status_error">#EF4444</color>
+    <color name="status_error_container">#FEE2E2</color>
+    <color name="status_error_text">#DC2626</color>
+
+    <!-- Backward compatibility aliases -->
+    <color name="surface_card_stroke_dark">#E2E6F0</color>
+    <color name="text_primary_dark">#1E202B</color>
+</resources>

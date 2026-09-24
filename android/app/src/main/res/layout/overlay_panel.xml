@@ -1,0 +1,155 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/overlay_panel_root"
+    android:layout_width="280dp"
+    android:layout_height="wrap_content"
+    android:background="@drawable/bg_overlay_panel"
+    android:elevation="12dp"
+    android:orientation="vertical"
+    android:padding="16dp">
+
+    <!-- Header: Icon + Title + Status Pill + Close button -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center_vertical"
+        android:orientation="horizontal">
+
+        <ImageView
+            android:layout_width="26dp"
+            android:layout_height="26dp"
+            android:contentDescription="@null"
+            android:src="@mipmap/ic_launcher" />
+
+        <TextView
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="10dp"
+            android:layout_weight="1"
+            android:fontFamily="sans-serif-medium"
+            android:text="Save Manager"
+            android:textColor="@color/overlay_text_primary"
+            android:textSize="15sp" />
+
+        <!-- Close (X) button -->
+        <ImageButton
+            android:id="@+id/overlay_btn_close"
+            android:layout_width="32dp"
+            android:layout_height="32dp"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:contentDescription="Close menu"
+            android:padding="4dp"
+            android:scaleType="centerInside"
+            android:src="@drawable/ic_close"
+            app:tint="@color/overlay_text_secondary" />
+    </LinearLayout>
+
+    <!-- Subtitle / helper note -->
+    <TextView
+        android:id="@+id/overlay_subtitle"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="2dp"
+        android:layout_marginBottom="12dp"
+        android:text="DungeonWithin · save.es3"
+        android:textColor="@color/overlay_text_secondary"
+        android:textSize="11sp" />
+
+    <!-- Action Buttons -->
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/overlay_btn_backup"
+        style="@style/Widget.Material3.Button"
+        android:layout_width="match_parent"
+        android:layout_height="48dp"
+        android:layout_marginBottom="8dp"
+        android:backgroundTint="@color/brand_primary"
+        android:letterSpacing="0.02"
+        android:text="Back Up Now"
+        android:textColor="@color/brand_on_primary"
+        android:textSize="14sp"
+        app:cornerRadius="12dp"
+        app:icon="@drawable/ic_backup"
+        app:iconGravity="textStart"
+        app:iconSize="18dp"
+        app:iconTint="@color/brand_on_primary" />
+
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/overlay_btn_restore"
+        style="@style/Widget.Material3.Button.TonalButton"
+        android:layout_width="match_parent"
+        android:layout_height="48dp"
+        android:backgroundTint="@color/brand_primary_tonal"
+        android:letterSpacing="0.02"
+        android:text="Restore Save"
+        android:textColor="@color/brand_on_primary_tonal"
+        android:textSize="14sp"
+        app:cornerRadius="12dp"
+        app:icon="@drawable/ic_restore"
+        app:iconGravity="textStart"
+        app:iconSize="18dp"
+        app:iconTint="@color/brand_on_primary_tonal" />
+
+    <!-- Progress Indicator (indeterminate, shown when working) -->
+    <com.google.android.material.progressindicator.LinearProgressIndicator
+        android:id="@+id/overlay_progress"
+        android:layout_width="match_parent"
+        android:layout_height="4dp"
+        android:layout_marginTop="10dp"
+        android:indeterminate="true"
+        android:visibility="gone"
+        app:indicatorColor="@color/brand_primary"
+        app:trackColor="@color/overlay_panel_stroke"
+        app:trackCornerRadius="2dp" />
+
+    <!-- Result / Status Card -->
+    <LinearLayout
+        android:id="@+id/overlay_result_card"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="10dp"
+        android:background="@drawable/bg_result_card"
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
+        android:padding="10dp">
+
+        <ImageView
+            android:id="@+id/overlay_result_icon"
+            android:layout_width="18dp"
+            android:layout_height="18dp"
+            android:layout_marginEnd="8dp"
+            android:contentDescription="@null"
+            android:src="@drawable/ic_info"
+            app:tint="@color/overlay_text_secondary" />
+
+        <TextView
+            android:id="@+id/overlay_result_text"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:ellipsize="end"
+            android:maxLines="4"
+            android:text="Ready for save operations."
+            android:textColor="@color/overlay_text_secondary"
+            android:textSize="12sp" />
+    </LinearLayout>
+
+    <!-- Footer: Stop Floating Service button -->
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/overlay_btn_stop"
+        style="@style/Widget.Material3.Button.TextButton"
+        android:layout_width="match_parent"
+        android:layout_height="36dp"
+        android:layout_marginTop="6dp"
+        android:insetTop="0dp"
+        android:insetBottom="0dp"
+        android:letterSpacing="0.01"
+        android:text="Stop Floating Button"
+        android:textColor="@color/overlay_text_secondary"
+        android:textSize="11sp"
+        app:icon="@drawable/ic_power"
+        app:iconGravity="textStart"
+        app:iconSize="14dp"
+        app:iconTint="@color/overlay_text_secondary" />
+
+</LinearLayout>

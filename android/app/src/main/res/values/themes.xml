@@ -1,5 +1,21 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <!-- Material You base: DayNight + wallpaper dynamic color (see SaveApp). -->
-    <style name="Theme.SaveManager" parent="Theme.Material3.DayNight.NoActionBar" />
+    <style name="Theme.SaveManager" parent="Theme.Material3.DayNight.NoActionBar">
+        <item name="colorPrimary">@color/brand_primary</item>
+        <item name="colorOnPrimary">@color/brand_on_primary</item>
+        <item name="colorPrimaryContainer">@color/brand_primary_tonal</item>
+        <item name="colorOnPrimaryContainer">@color/brand_on_primary_tonal</item>
+        <item name="android:statusBarColor">@android:color/transparent</item>
+        <item name="android:navigationBarColor">@android:color/transparent</item>
+    </style>
+
+    <!-- Overlay HUD Theme: Dark gaming theme for the floating panel and dialogs -->
+    <style name="Theme.SaveManager.Overlay" parent="Theme.Material3.Dark.NoActionBar">
+        <item name="colorPrimary">@color/brand_primary</item>
+        <item name="colorOnPrimary">@color/brand_on_primary</item>
+        <item name="colorPrimaryContainer">@color/brand_primary_tonal</item>
+        <item name="colorOnPrimaryContainer">@color/brand_on_primary_tonal</item>
+        <item name="colorSurface">@color/overlay_panel_bg</item>
+    </style>
 </resources>

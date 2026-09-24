@@ -8,29 +8,37 @@ import android.app.PendingIntent
 import android.app.Service
 import android.content.Context
 import android.content.Intent
+import android.content.res.ColorStateList
+import android.graphics.Color
 import android.graphics.PixelFormat
+import android.graphics.drawable.GradientDrawable
+import android.os.Build
 import android.os.Handler
 import android.os.IBinder
 import android.os.Looper
-import android.graphics.Color
+import android.util.DisplayMetrics
 import android.util.Log
+import android.view.ContextThemeWrapper
 import android.view.Gravity
+import android.view.LayoutInflater
 import android.view.MotionEvent
 import android.view.View
+import android.view.WindowInsets
 import android.view.WindowManager
-import android.widget.Button
 import android.widget.ImageButton
 import android.widget.ImageView
-import android.widget.LinearLayout
 import android.widget.TextView
-import com.google.android.material.R as MaterialR
+import androidx.core.content.ContextCompat
+import com.google.android.material.button.MaterialButton
+import com.google.android.material.progressindicator.LinearProgressIndicator
 
 /**
- * Foreground service hosting the draggable floating save-logo button.
+ * Foreground service hosting the draggable floating save HUD button.
  *
- * Tap opens a small panel with Back Up / Restore / Hide. Touch-hold
- * (long-press without dragging) stops the service. Button position is
- * persisted across restarts.
+ * Tap opens an elegant gaming HUD with Back Up / Restore / Stop controls,
+ * real-time progress feedback, and results. Touch-hold (~600ms without dragging)
+ * also stops the service. Screen boundaries are clamped during drag, and
+ * button position is persisted across restarts.
  */
 class OverlayService : Service() {
 
@@ -43,6 +51,10 @@ class OverlayService : Service() {
         private const val KEY_X = "x"
         private const val KEY_Y = "y"
 
+        @Volatile
+        var isRunning: Boolean = false
+            private set
+
         fun start(context: Context) {
             context.startForegroundService(Intent(context, OverlayService::class.java))
         }
@@ -50,15 +62,27 @@ class OverlayService : Service() {
 
     private lateinit var windowManager: WindowManager
     private lateinit var fabParams: WindowManager.LayoutParams
-    private var fab: ImageButton? = null
-    private var panel: LinearLayout? = null
-    private var resultView: TextView? = null
+    private lateinit var themedContext: Context
+
+    private var fabView: View? = null
+    private var fabStatusDot: View? = null
+    private var panelView: View? = null
+
+    private var panelBackupBtn: MaterialButton? = null
+    private var panelRestoreBtn: MaterialButton? = null
+    private var panelProgress: LinearProgressIndicator? = null
+    private var panelResultText: TextView? = null
+    private var panelResultIcon: ImageView? = null
+
+    private var isWorking = false
     private val mainHandler = Handler(Looper.getMainLooper())
 
     override fun onBind(intent: Intent?): IBinder? = null
 
     override fun onCreate() {
         super.onCreate()
+        isRunning = true
+        themedContext = ContextThemeWrapper(this, R.style.Theme_SaveManager_Overlay)
         windowManager = getSystemService(WINDOW_SERVICE) as WindowManager
         startForeground(NOTIFICATION_ID, buildNotification())
         showFab()
@@ -69,12 +93,22 @@ class OverlayService : Service() {
     }
 
     override fun onDestroy() {
-        fab?.let { runCatching { windowManager.removeView(it) } }
-        panel?.let { runCatching { windowManager.removeView(it) } }
-        fab = null
-        panel = null
-        resultView = null
+        isRunning = false
+        fabView?.let { runCatching { windowManager.removeView(it) } }
+        panelView?.let { runCatching { windowManager.removeView(it) } }
+        fabView = null
+        fabStatusDot = null
+        panelView = null
+        clearPanelReferences()
         super.onDestroy()
+    }
+
+    private fun clearPanelReferences() {
+        panelBackupBtn = null
+        panelRestoreBtn = null
+        panelProgress = null
+        panelResultText = null
+        panelResultIcon = null
     }
 
     private fun buildNotification(): Notification {
@@ -89,96 +123,145 @@ class OverlayService : Service() {
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
         )
         return Notification.Builder(this, CHANNEL_ID)
-            .setContentTitle("Save Manager")
-            .setContentText("Floating save button is active")
-            .setSmallIcon(android.R.drawable.ic_menu_save)
+            .setContentTitle("Save Manager Overlay Active")
+            .setContentText("Tap to open controller settings")
+            .setSmallIcon(R.drawable.ic_backup)
             .setContentIntent(openApp)
             .build()
     }
 
     private fun showFab() {
         val prefs = getSharedPreferences(PREFS, MODE_PRIVATE)
-        // The logo artwork is self-contained (own tile + colors): no theme
-        // tint or background, so rendering can't fail on theme lookups.
         val fabSize = dp(56)
+        val (screenWidth, screenHeight) = getScreenBounds()
+
+        val defaultX = dp(16)
+        val defaultY = dp(160)
+        val savedX = prefs.getInt(KEY_X, defaultX).coerceIn(0, (screenWidth - fabSize).coerceAtLeast(0))
+        val savedY = prefs.getInt(KEY_Y, defaultY).coerceIn(0, (screenHeight - fabSize).coerceAtLeast(0))
+
         fabParams = overlayParams().apply {
             width = fabSize
             height = fabSize
-            x = prefs.getInt(KEY_X, dp(16))
-            y = prefs.getInt(KEY_Y, dp(160))
+            x = savedX
+            y = savedY
         }
-        fab = ImageButton(this).apply {
-            setImageResource(R.mipmap.ic_launcher)
-            setBackgroundColor(Color.TRANSPARENT)
-            scaleType = ImageView.ScaleType.FIT_CENTER
-            contentDescription = "Save manager floating button. Tap for backup and restore."
-            setOnTouchListener(DragListener { togglePanel() })
-        }
+
+        val inflater = LayoutInflater.from(themedContext)
+        val root = inflater.inflate(R.layout.overlay_fab, null)
+        fabStatusDot = root.findViewById(R.id.overlay_fab_status_dot)
+        updateFabStatusDot(StatusState.OK)
+
+        root.setOnTouchListener(DragListener { togglePanel() })
+        fabView = root
+
         try {
-            windowManager.addView(fab, fabParams)
+            windowManager.addView(root, fabParams)
         } catch (e: Exception) {
-            // e.g. overlay permission revoked mid-run: say so, don't just vanish.
-            fab = null
+            Log.e("OverlayService", "Could not show floating button", e)
+            fabView = null
             toast("Couldn't show the floating button: ${e.message}")
             stopSelf()
         }
     }
 
+    private fun updateFabStatusDot(state: StatusState) {
+        val dot = fabStatusDot ?: return
+        val colorRes = when (state) {
+            StatusState.OK -> R.color.status_ok
+            StatusState.WARN -> R.color.status_warn
+            StatusState.ERROR -> R.color.status_error
+        }
+        val pill = GradientDrawable().apply {
+            shape = GradientDrawable.OVAL
+            setColor(ContextCompat.getColor(themedContext, colorRes))
+            setStroke(dp(1), Color.WHITE)
+        }
+        dot.background = pill
+    }
+
     private fun togglePanel() {
         try {
-            if (panel != null) hidePanel() else showPanel()
+            if (panelView != null) hidePanel() else showPanel()
         } catch (e: Exception) {
-            // Never take the service down with a dead panel. Logged always;
-            // toasted when the system lets toasts through.
             Log.e("OverlayService", "Panel failed", e)
             toast("Panel failed: ${e.message}")
         }
     }
 
     private fun showPanel() {
+        val (screenWidth, screenHeight) = getScreenBounds()
+        val panelWidth = dp(280)
+        val fabSize = dp(56)
+
+        // Calculate dynamic smart positioning so panel stays within screen bounds
+        val panelX = if (fabParams.x + fabSize / 2 > screenWidth / 2) {
+            // FAB is on right half: open panel to the left
+            (fabParams.x - panelWidth - dp(8)).coerceAtLeast(dp(12))
+        } else {
+            // FAB is on left half: open panel to the right
+            (fabParams.x + fabSize + dp(8)).coerceAtMost(screenWidth - panelWidth - dp(12))
+        }
+
+        // Clamp Y so panel doesn't fall off top or bottom
+        val panelY = fabParams.y.coerceIn(dp(32), (screenHeight - dp(320)).coerceAtLeast(dp(32)))
+
         val params = overlayParams().apply {
-            x = fabParams.x
-            y = fabParams.y + dp(64)
+            width = panelWidth
+            height = WindowManager.LayoutParams.WRAP_CONTENT
+            x = panelX
+            y = panelY
+            windowAnimations = android.R.style.Animation_Dialog
         }
-        val layout = LinearLayout(this).apply {
-            orientation = LinearLayout.VERTICAL
-            setPadding(dp(8), dp(8), dp(8), dp(8))
+
+        val inflater = LayoutInflater.from(themedContext)
+        val panel = inflater.inflate(R.layout.overlay_panel, null)
+
+        val closeBtn = panel.findViewById<ImageButton>(R.id.overlay_btn_close)
+        val backupBtn = panel.findViewById<MaterialButton>(R.id.overlay_btn_backup)
+        val restoreBtn = panel.findViewById<MaterialButton>(R.id.overlay_btn_restore)
+        val stopBtn = panel.findViewById<MaterialButton>(R.id.overlay_btn_stop)
+        val progress = panel.findViewById<LinearProgressIndicator>(R.id.overlay_progress)
+        val resultText = panel.findViewById<TextView>(R.id.overlay_result_text)
+        val resultIcon = panel.findViewById<ImageView>(R.id.overlay_result_icon)
+
+        panelBackupBtn = backupBtn
+        panelRestoreBtn = restoreBtn
+        panelProgress = progress
+        panelResultText = resultText
+        panelResultIcon = resultIcon
+
+        closeBtn.setOnClickListener { hidePanel() }
+        backupBtn.setOnClickListener { runOp(SaveOp.BACKUP) }
+        restoreBtn.setOnClickListener { runOp(SaveOp.RESTORE) }
+        stopBtn.setOnClickListener {
+            toast("Floating button stopped")
+            stopSelf()
         }
-        // Framework buttons on purpose: Material buttons resolve theme
-        // attributes that a Service context can't always provide, which
-        // crashed the panel on tap.
-        layout.addView(Button(this).apply {
-            text = "Back Up"
-            setOnClickListener { runOp(SaveOp.BACKUP) }
-        })
-        layout.addView(Button(this).apply {
-            text = "Restore"
-            setOnClickListener { runOp(SaveOp.RESTORE) }
-        })
-        layout.addView(Button(this).apply {
-            text = "Hide"
-            setOnClickListener { hidePanel() }
-        })
-        // Result line: survives toast suppression and stays until Hide.
-        resultView = TextView(this).apply {
-            text = "Pick an action."
-            textSize = 13f
-            setPadding(dp(4), dp(8), dp(4), 0)
-        }
-        layout.addView(resultView)
-        panel = layout
+
+        updatePanelWorkingState(isWorking)
+
         try {
-            windowManager.addView(layout, params)
+            windowManager.addView(panel, params)
+            panelView = panel
         } catch (e: Exception) {
-            panel = null
+            panelView = null
+            clearPanelReferences()
             throw e
         }
     }
 
     private fun hidePanel() {
-        panel?.let { runCatching { windowManager.removeView(it) } }
-        panel = null
-        resultView = null
+        panelView?.let { runCatching { windowManager.removeView(it) } }
+        panelView = null
+        clearPanelReferences()
+    }
+
+    private fun updatePanelWorkingState(working: Boolean) {
+        panelProgress?.visibleOrGone(working)
+        panelBackupBtn?.isEnabled = !working
+        panelRestoreBtn?.isEnabled = !working
+        updateFabStatusDot(if (working) StatusState.WARN else StatusState.OK)
     }
 
     private fun overlayParams(): WindowManager.LayoutParams =
@@ -193,39 +276,60 @@ class OverlayService : Service() {
         }
 
     private fun runOp(op: SaveOp) {
-        toast("Working…")
-        resultView?.text = "Working…"
+        if (isWorking) return
+        isWorking = true
+        updatePanelWorkingState(true)
+
+        panelResultText?.text = "Executing ${op.label}…"
+        panelResultText?.setTextColor(ContextCompat.getColor(themedContext, R.color.overlay_text_secondary))
+        panelResultIcon?.setImageResource(R.drawable.ic_info)
+        panelResultIcon?.imageTintList =
+            ColorStateList.valueOf(ContextCompat.getColor(themedContext, R.color.brand_primary))
+
+        toast("Working on ${op.label}…")
+
         Thread {
             val outcome = SaveOperations.execute(op, this@OverlayService)
             val ok = outcome is SaveRepository.Outcome.Ok
-            // Success fits one line; failures carry guidance ("Looked for: …",
-            // "Launch … manually") that the overlay user must see in full.
             val short = if (ok) {
                 outcome.message.substringBefore("\n")
             } else {
                 outcome.message
             }
             val title = if (ok) "${op.label} OK" else "${op.label} failed"
+
             mainHandler.post {
+                isWorking = false
+                updatePanelWorkingState(false)
                 toast(short)
-                resultView?.let {
-                    it.text = outcome.message
-                    it.setTextColor(
-                        attrColor(
-                            if (ok) MaterialR.attr.colorPrimary else MaterialR.attr.colorError,
-                            if (ok) Color.GREEN else Color.RED,
+
+                panelResultText?.let { view ->
+                    view.text = outcome.message
+                    view.setTextColor(
+                        ContextCompat.getColor(
+                            themedContext,
+                            if (ok) R.color.status_ok_text else R.color.status_error_text,
                         ),
                     )
                 }
+
+                panelResultIcon?.let { icon ->
+                    icon.setImageResource(if (ok) R.drawable.ic_check_circle else R.drawable.ic_error_circle)
+                    icon.imageTintList = ColorStateList.valueOf(
+                        ContextCompat.getColor(
+                            themedContext,
+                            if (ok) R.color.status_ok else R.color.status_error,
+                        ),
+                    )
+                }
+
                 notifyResult(title, outcome.message)
             }
         }.start()
     }
 
     /**
-     * Heads-up notification with the full result. Toasts can be suppressed
-     * device-wide (seen in the wild); this channel is high-importance so the
-     * outcome still surfaces over the game. Tap opens the app for details.
+     * Heads-up notification with the full result.
      */
     private fun notifyResult(title: String, message: String) {
         if (!AppSettings.areResultNotificationsEnabled(this)) return
@@ -243,7 +347,7 @@ class OverlayService : Service() {
             .setContentTitle(title)
             .setContentText(message.substringBefore("\n"))
             .setStyle(Notification.BigTextStyle().bigText(message))
-            .setSmallIcon(android.R.drawable.ic_menu_save)
+            .setSmallIcon(R.drawable.ic_backup)
             .setContentIntent(openApp)
             .setAutoCancel(true)
             .build()
@@ -257,9 +361,29 @@ class OverlayService : Service() {
             .apply()
     }
 
+    private data class ScreenSize(val width: Int, val height: Int)
+
+    private fun getScreenBounds(): ScreenSize {
+        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            val windowMetrics = windowManager.currentWindowMetrics
+            val insets = windowMetrics.windowInsets.getInsetsIgnoringVisibility(
+                WindowInsets.Type.systemBars(),
+            )
+            val bounds = windowMetrics.bounds
+            val width = bounds.width() - insets.left - insets.right
+            val height = bounds.height() - insets.top - insets.bottom
+            ScreenSize(width.coerceAtLeast(320), height.coerceAtLeast(480))
+        } else {
+            val displayMetrics = DisplayMetrics()
+            @Suppress("DEPRECATION")
+            windowManager.defaultDisplay.getMetrics(displayMetrics)
+            ScreenSize(displayMetrics.widthPixels, displayMetrics.heightPixels)
+        }
+    }
+
     /**
      * Drag to move; plain tap toggles the action panel; press-and-hold
-     * (~600ms, no drag) stops the service.
+     * (~600ms, no drag) stops the service. Clamps movement within screen boundaries.
      */
     private inner class DragListener(private val onTap: () -> Unit) : View.OnTouchListener {
         private var downX = 0f
@@ -269,10 +393,15 @@ class OverlayService : Service() {
         private var downTime = 0L
         private var dragging = false
         private val slop: Float
-            get() = 24f * resources.displayMetrics.density
+            get() = 16f * resources.displayMetrics.density
 
         @SuppressLint("ClickableViewAccessibility")
         override fun onTouch(view: View, event: MotionEvent): Boolean {
+            val fabSize = dp(56)
+            val (screenWidth, screenHeight) = getScreenBounds()
+            val maxX = (screenWidth - fabSize).coerceAtLeast(0)
+            val maxY = (screenHeight - fabSize).coerceAtLeast(0)
+
             when (event.action) {
                 MotionEvent.ACTION_DOWN -> {
                     downX = event.rawX
@@ -281,6 +410,7 @@ class OverlayService : Service() {
                     startY = fabParams.y
                     downTime = event.eventTime
                     dragging = false
+                    view.animate().scaleX(0.92f).scaleY(0.92f).setDuration(100).start()
                     return true
                 }
                 MotionEvent.ACTION_MOVE -> {
@@ -288,15 +418,17 @@ class OverlayService : Service() {
                     val dy = event.rawY - downY
                     if (!dragging && Math.hypot(dx.toDouble(), dy.toDouble()) > slop) {
                         dragging = true
+                        if (panelView != null) hidePanel()
                     }
                     if (dragging) {
-                        fabParams.x = startX + dx.toInt()
-                        fabParams.y = startY + dy.toInt()
+                        fabParams.x = (startX + dx.toInt()).coerceIn(0, maxX)
+                        fabParams.y = (startY + dy.toInt()).coerceIn(0, maxY)
                         windowManager.updateViewLayout(view, fabParams)
                     }
                     return true
                 }
                 MotionEvent.ACTION_UP -> {
+                    view.animate().scaleX(1.0f).scaleY(1.0f).setDuration(120).start()
                     if (dragging) {
                         savePosition()
                     } else if (event.eventTime - downTime > 600) {
@@ -308,7 +440,10 @@ class OverlayService : Service() {
                     }
                     return true
                 }
-                MotionEvent.ACTION_CANCEL -> return true
+                MotionEvent.ACTION_CANCEL -> {
+                    view.animate().scaleX(1.0f).scaleY(1.0f).setDuration(120).start()
+                    return true
+                }
             }
             return false
         }

@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Brand & Accent -->
+    <color name="brand_primary">#6A82EA</color>
+    <color name="brand_primary_tonal">#263050</color>
+    <color name="brand_on_primary">#FFFFFF</color>
+    <color name="brand_on_primary_tonal">#D4DCFA</color>
+
+    <!-- Surfaces & Cards (Dark Theme) -->
+    <color name="card_surface">#1B1D27</color>
+    <color name="card_stroke">#2B2F40</color>
+    <color name="divider_stroke">#242735</color>
+    <color name="card_result_bg">#15161F</color>
+    <color name="icon_container_bg">#252C46</color>
+    <color name="icon_container_tint">#9AB0FA</color>
+
+    <!-- Semantic Status Colors (Vibrant on Dark) -->
+    <color name="status_ok">#10B981</color>
+    <color name="status_ok_container">#163327</color>
+    <color name="status_ok_text">#4ADE80</color>
+
+    <color name="status_warn">#F59E0B</color>
+    <color name="status_warn_container">#382710</color>
+    <color name="status_warn_text">#FBBF24</color>
+
+    <color name="status_error">#EF4444</color>
+    <color name="status_error_container">#3B1818</color>
+    <color name="status_error_text">#F87171</color>
+
+    <!-- Backward compatibility aliases -->
+    <color name="surface_card_stroke_dark">#2B2F40</color>
+    <color name="text_primary_dark">#F0F2F8</color>
+</resources>
